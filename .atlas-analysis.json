@@ -1,0 +1,121 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Better Svelte Email",
+  "projectDescription": "Render emails in Svelte effortlessly with first-class Tailwind CSS support",
+  "theme": "palm",
+  "primaryColor": "#FF3E00",
+  "lightColor": "#FF6B35",
+  "darkColor": "#E03000",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "core/rendering",
+              "core/tailwind-support",
+              "core/plain-text"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/overview",
+              "components/html-head-body",
+              "components/layout",
+              "components/typography",
+              "components/button-link",
+              "components/media"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/email-preview",
+              "guides/custom-tailwind-config",
+              "guides/sending-emails",
+              "guides/testing"
+            ]
+          },
+          {
+            "group": "Migration",
+            "pages": [
+              "migration/v1-migration"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Renderer",
+            "pages": [
+              "api/renderer",
+              "api/renderer-options",
+              "api/render-options"
+            ]
+          },
+          {
+            "group": "Preview",
+            "pages": [
+              "api/email-list",
+              "api/create-email",
+              "api/send-email"
+            ]
+          },
+          {
+            "group": "Utilities",
+            "pages": [
+              "api/to-plain-text",
+              "api/style-utils"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Tailwind CSS v4 with automatic inline style conversion",
+    "Built-in visual email preview component",
+    "TypeScript-first with comprehensive type definitions",
+    "14 email-optimized Svelte components",
+    "Plain text rendering for accessibility",
+    "Custom Tailwind configuration support",
+    "Responsive breakpoints (sm, md, lg, xl, 2xl)",
+    "SvelteKit integration with form actions"
+  ],
+  "publicApiSurface": [
+    "Renderer class",
+    "Renderer.render(component, options)",
+    "toPlainText(markup)",
+    "Html component",
+    "Head component",
+    "Body component",
+    "Preview component",
+    "Container component",
+    "Section component",
+    "Row component",
+    "Column component",
+    "Heading component",
+    "Text component",
+    "Button component",
+    "Link component",
+    "Img component",
+    "Hr component",
+    "EmailPreview component",
+    "emailList(options)",
+    "createEmail(options)",
+    "sendEmail(options)"
+  ]
+}
