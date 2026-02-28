@@ -1,0 +1,383 @@
+---
+title: 'Testing Email Templates'
+description: 'Test your email templates with unit tests and visual testing'
+icon: 'flask'
+---
+
+Testing email templates ensures they render correctly and maintain quality across changes. This guide covers unit testing, snapshot testing, and visual testing approaches.
+
+## Unit testing with Vitest
+
+Test that your email components render without errors and produce expected HTML.
+
+### Setup
+
+Install testing dependencies:
+
+```bash
+npm install -D vitest @testing-library/svelte @vitest/ui
+```
+
+Configure Vitest in `vite.config.ts`:
+
+```typescript vite.config.ts
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  plugins: [sveltekit()],
+  test: {
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    environment: 'jsdom'
+  }
+});
+```
+
+### Basic rendering test
+
+Test that an email component renders successfully:
+
+```typescript src/lib/emails/welcome.test.ts
+import { describe, it, expect } from 'vitest';
+import Renderer from 'better-svelte-email/render';
+import WelcomeEmail from './welcome.svelte';
+
+describe('WelcomeEmail', () => {
+  it('renders without errors', async () => {
+    const renderer = new Renderer();
+    const html = await renderer.render(WelcomeEmail, {
+      props: { name: 'John' }
+    });
+
+    expect(html).toBeTruthy();
+    expect(html).toContain('<!DOCTYPE');
+  });
+
+  it('includes user name', async () => {
+    const renderer = new Renderer();
+    const html = await renderer.render(WelcomeEmail, {
+      props: { name: 'Alice' }
+    });
+
+    expect(html).toContain('Alice');
+  });
+
+  it('contains expected elements', async () => {
+    const renderer = new Renderer();
+    const html = await renderer.render(WelcomeEmail, {
+      props: { name: 'Bob' }
+    });
+
+    expect(html).toContain('Welcome');
+    expect(html).toContain('<html');
+    expect(html).toContain('<body');
+  });
+});
+```
+
+### Testing with custom config
+
+Test emails with custom Tailwind configuration:
+
+```typescript src/lib/emails/branded.test.ts
+import { describe, it, expect } from 'vitest';
+import Renderer from 'better-svelte-email/render';
+import BrandedEmail from './branded.svelte';
+
+describe('BrandedEmail with custom config', () => {
+  it('applies custom brand colors', async () => {
+    const renderer = new Renderer({
+      tailwindConfig: {
+        theme: {
+          extend: {
+            colors: {
+              brand: '#FF3E00'
+            }
+          }
+        }
+      }
+    });
+
+    const html = await renderer.render(BrandedEmail);
+
+    // Check that brand color is applied inline
+    expect(html).toContain('#FF3E00');
+  });
+});
+```
+
+## Snapshot testing
+
+Snapshot tests capture the rendered HTML and alert you to unexpected changes.
+
+```typescript src/lib/emails/welcome.test.ts
+import { describe, it, expect } from 'vitest';
+import Renderer from 'better-svelte-email/render';
+import WelcomeEmail from './welcome.svelte';
+
+describe('WelcomeEmail snapshots', () => {
+  it('matches snapshot', async () => {
+    const renderer = new Renderer();
+    const html = await renderer.render(WelcomeEmail, {
+      props: { name: 'John' }
+    });
+
+    expect(html).toMatchSnapshot();
+  });
+
+  it('matches snapshot with different props', async () => {
+    const renderer = new Renderer();
+    const html = await renderer.render(WelcomeEmail, {
+      props: { name: 'Alice' }
+    });
+
+    expect(html).toMatchSnapshot();
+  });
+});
+```
+
+Run tests:
+
+```bash
+npm run test
+```
+
+Update snapshots when you intentionally change the template:
+
+```bash
+npm run test -- -u
+```
+
+## Testing plain text conversion
+
+Ensure the plain text version is generated correctly:
+
+```typescript src/lib/emails/welcome.test.ts
+import { describe, it, expect } from 'vitest';
+import Renderer, { toPlainText } from 'better-svelte-email/render';
+import WelcomeEmail from './welcome.svelte';
+
+describe('WelcomeEmail plain text', () => {
+  it('converts to plain text', async () => {
+    const renderer = new Renderer();
+    const html = await renderer.render(WelcomeEmail, {
+      props: { name: 'John' }
+    });
+    const text = toPlainText(html);
+
+    expect(text).toContain('Welcome John');
+    expect(text).not.toContain('<html');
+    expect(text).not.toContain('<!DOCTYPE');
+  });
+
+  it('removes HTML tags', async () => {
+    const renderer = new Renderer();
+    const html = await renderer.render(WelcomeEmail, {
+      props: { name: 'Alice' }
+    });
+    const text = toPlainText(html);
+
+    expect(text).not.toMatch(/<[^>]+>/);
+  });
+});
+```
+
+## Testing email sending
+
+Test email sending logic without actually sending emails.
+
+### Mock email provider
+
+Use Vitest mocking to test sending logic:
+
+```typescript src/routes/api/send-email/+server.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { POST } from './+server';
+
+// Mock Resend
+vi.mock('resend', () => {
+  return {
+    Resend: vi.fn().mockImplementation(() => ({
+      emails: {
+        send: vi.fn().mockResolvedValue({
+          data: { id: 'test-email-id' },
+          error: null
+        })
+      }
+    }))
+  };
+});
+
+describe('POST /api/send-email', () => {
+  it('sends email successfully', async () => {
+    const request = new Request('http://localhost/api/send-email', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'John',
+        email: 'john@example.com'
+      })
+    });
+
+    const response = await POST({ request });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+  });
+
+  it('handles missing parameters', async () => {
+    const request = new Request('http://localhost/api/send-email', {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
+
+    const response = await POST({ request });
+    
+    expect(response.status).toBeGreaterThanOrEqual(400);
+  });
+});
+```
+
+## Visual testing
+
+Use the `EmailPreview` component for manual visual testing during development.
+
+### Setup preview route
+
+Create a preview route to visually test all your emails:
+
+```typescript src/routes/email-preview/[...email]/+page.server.ts
+import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+import { env } from '$env/dynamic/private';
+
+export function load() {
+  return { emails: emailList() };
+}
+
+export const actions = {
+  ...createEmail(),
+  ...sendEmail({ resendApiKey: env.RESEND_API_KEY })
+};
+```
+
+```svelte src/routes/email-preview/[...email]/+page.svelte
+<script lang="ts">
+  import { EmailPreview } from 'better-svelte-email/preview';
+  import { page } from '$app/state';
+</script>
+
+<EmailPreview {page} />
+```
+
+Navigate to `/email-preview` to visually test all templates.
+
+## Testing responsive designs
+
+Test that responsive classes generate proper media queries:
+
+```typescript src/lib/emails/responsive.test.ts
+import { describe, it, expect } from 'vitest';
+import Renderer from 'better-svelte-email/render';
+import ResponsiveEmail from './responsive.svelte';
+
+describe('ResponsiveEmail', () => {
+  it('includes media queries for responsive classes', async () => {
+    const renderer = new Renderer();
+    const html = await renderer.render(ResponsiveEmail);
+
+    // Check for media query in <head>
+    expect(html).toContain('@media');
+    expect(html).toContain('max-width');
+  });
+});
+```
+
+## Test email in real clients
+
+For production readiness, test in actual email clients:
+
+### Using Email on Acid or Litmus
+
+1. Render your email template
+2. Copy the HTML output
+3. Paste into [Email on Acid](https://www.emailonacid.com/) or [Litmus](https://www.litmus.com/)
+4. Test across multiple clients
+
+### Manual testing
+
+Use the preview component to send test emails to yourself:
+
+1. Navigate to your preview route
+2. Select an email template
+3. Click "Send Test Email"
+4. Enter your email address
+5. Check the email in various clients (Gmail, Outlook, Apple Mail, etc.)
+
+## Continuous Integration
+
+Add email testing to your CI pipeline:
+
+```yaml .github/workflows/test.yml
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npm test
+```
+
+Ensure your `package.json` includes:
+
+```json package.json
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  }
+}
+```
+
+## Testing checklist
+
+Before deploying email templates, verify:
+
+- [ ] Template renders without errors
+- [ ] Props are correctly interpolated
+- [ ] Custom Tailwind config is applied
+- [ ] Plain text version is readable
+- [ ] Responsive classes generate media queries
+- [ ] Links are correct and trackable
+- [ ] Images load properly
+- [ ] Tested in major email clients (Gmail, Outlook, Apple Mail)
+- [ ] Subject line is appropriate
+- [ ] From address is configured
+- [ ] Unsubscribe link is present (if required)
+
+## Best practices
+
+- **Test early and often**: Run tests during development, not just before deployment.
+- **Use snapshots wisely**: Snapshot tests are great for catching unintended changes, but update them when you make intentional changes.
+- **Mock external services**: Don't send real emails in tests; mock your email provider.
+- **Test edge cases**: Empty strings, long names, special characters, etc.
+- **Visual testing matters**: Automated tests can't catch everything. Always do visual checks.
+- **Test across clients**: Different email clients render HTML differently. Test the important ones for your audience.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Email Preview" icon="eye" href="/guides/email-preview">
+    Set up visual testing with the preview component
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/guides/sending-emails">
+    Learn how to send emails in production
+  </Card>
+</CardGroup>

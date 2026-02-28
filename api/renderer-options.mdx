@@ -1,0 +1,256 @@
+---
+title: RendererOptions
+description: Configuration options for creating a Renderer instance
+---
+
+## Overview
+
+`RendererOptions` is a configuration object passed to the `Renderer` constructor to customize how emails are rendered.
+
+## Type Definition
+
+```ts
+export type RendererOptions = {
+  tailwindConfig?: TailwindConfig;
+  customCSS?: string;
+  baseFontSize?: number;
+};
+```
+
+## Properties
+
+<ParamField path="tailwindConfig" type="TailwindConfig">
+  Tailwind CSS configuration object (v3) to extend or override the default theme.
+  
+  The `TailwindConfig` type is `Omit<Config, 'content'>` - a standard Tailwind config without the `content` property.
+  
+  **Example:**
+  ```ts
+  {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00',
+          accent: '#40B3FF'
+        },
+        spacing: {
+          '128': '32rem'
+        }
+      }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField path="customCSS" type="string">
+  Custom CSS to inject into email rendering (e.g., app theme variables).
+  
+  This CSS is injected during Tailwind compilation, making variables and styles available for processing. This is particularly useful for:
+  - Maintaining consistent styling between your app and emails
+  - Sharing theme variables (e.g., shadcn-svelte theme variables)
+  - Defining CSS custom properties with `@property`
+  - Adding global styles that should apply to all emails
+  
+  **Example with app styles:**
+  ```ts
+  import appStyles from './app.css?raw';
+  
+  const renderer = new Renderer({
+    customCSS: appStyles
+  });
+  ```
+  
+  **Example with CSS variables:**
+  ```ts
+  const renderer = new Renderer({
+    customCSS: `
+      @property --primary-color {
+        syntax: "<color>";
+        inherits: false;
+        initial-value: #FF3E00;
+      }
+      
+      @layer base {
+        * {
+          box-sizing: border-box;
+        }
+      }
+    `
+  });
+  ```
+</ParamField>
+
+<ParamField path="baseFontSize" type="number" default="16">
+  Base font size in pixels for converting relative units (rem, em) to absolute pixels.
+  
+  This value is used when resolving `calc()` expressions with mixed units during style inlining.
+  
+  **Important:** In the email rendering context, `em` is treated as `rem` (relative to this base font size) since parent element context is not available during the rendering process.
+  
+  **Example:**
+  ```ts
+  const renderer = new Renderer({
+    baseFontSize: 18 // Use 18px as the base instead of 16px
+  });
+  ```
+</ParamField>
+
+## Usage Examples
+
+### Minimal configuration
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+
+const renderer = new Renderer();
+// Uses all defaults: no custom Tailwind config, no custom CSS, baseFontSize = 16
+```
+
+### With Tailwind configuration only
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  }
+});
+```
+
+### With custom CSS only
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({
+  customCSS: layoutStyles
+});
+```
+
+### With custom base font size
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+
+const renderer = new Renderer({
+  baseFontSize: 18 // Larger base font for better readability
+});
+```
+
+### Complete configuration
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00',
+          accent: '#40B3FF'
+        },
+        fontFamily: {
+          sans: ['Inter', 'sans-serif']
+        }
+      }
+    }
+  },
+  customCSS: layoutStyles,
+  baseFontSize: 16
+});
+```
+
+### Using with shadcn-svelte theme
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import appTheme from '$lib/styles/theme.css?raw';
+
+const renderer = new Renderer({
+  customCSS: appTheme, // Contains CSS variables like --primary, --background, etc.
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          primary: 'var(--primary)',
+          background: 'var(--background)'
+        }
+      }
+    }
+  }
+});
+```
+
+### Using CSS @property for variable resolution
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          'custom-color': 'var(--my-color)'
+        }
+      }
+    }
+  },
+  customCSS: `
+    @property --my-color {
+      syntax: "<color>";
+      inherits: false;
+      initial-value: #00ff00;
+    }
+  `
+});
+```
+
+## Backward Compatibility
+
+The `Renderer` constructor also accepts a bare `TailwindConfig` object for backward compatibility:
+
+```ts
+// Old API (still supported)
+const renderer = new Renderer({
+  theme: {
+    extend: {
+      colors: {
+        brand: '#FF3E00'
+      }
+    }
+  }
+});
+
+// New API (recommended)
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  }
+});
+```
+
+<Note>
+  The constructor automatically detects which API you're using. If the object contains `tailwindConfig`, `customCSS`, or `baseFontSize` properties, it's treated as `RendererOptions`. Otherwise, it's treated as a legacy `TailwindConfig`.
+</Note>
+
+## See Also
+
+- [Renderer](/api/renderer) - The Renderer class
+- [RenderOptions](/api/render-options) - Options for the render() method

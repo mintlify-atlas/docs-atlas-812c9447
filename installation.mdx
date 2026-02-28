@@ -1,0 +1,269 @@
+---
+title: "Installation"
+description: "Install Better Svelte Email and set up your development environment"
+---
+
+## Prerequisites
+
+Before installing Better Svelte Email, ensure you have:
+
+- **Svelte** >= v5.14.3
+- **Node.js** >= 18 (recommended)
+- A Svelte or SvelteKit project set up
+
+<Note>
+  Better Svelte Email requires Svelte 5.14.3 or higher. For older versions of Svelte, use [`svelte-email-tailwind`](https://github.com/steveninety/svelte-email-tailwind) instead.
+</Note>
+
+## Install the Package
+
+Install Better Svelte Email using your preferred package manager:
+
+<CodeGroup>
+
+```bash npm
+npm install better-svelte-email
+```
+
+```bash yarn
+yarn add better-svelte-email
+```
+
+```bash pnpm
+pnpm add better-svelte-email
+```
+
+```bash bun
+bun add better-svelte-email
+```
+
+</CodeGroup>
+
+## Optional Dependencies
+
+Better Svelte Email has several optional dependencies that enable additional features:
+
+### Email Preview Component
+
+For the built-in email preview component:
+
+<CodeGroup>
+
+```bash npm
+npm install --save-dev shiki
+```
+
+```bash yarn
+yarn add --dev shiki
+```
+
+```bash pnpm
+pnpm add --save-dev shiki
+```
+
+```bash bun
+bun add --dev shiki
+```
+
+</CodeGroup>
+
+### Sending Emails with Resend
+
+If you're using [Resend](https://resend.com) to send emails:
+
+<CodeGroup>
+
+```bash npm
+npm install resend
+```
+
+```bash yarn
+yarn add resend
+```
+
+```bash pnpm
+pnpm add resend
+```
+
+```bash bun
+bun add resend
+```
+
+</CodeGroup>
+
+### Code Formatting
+
+For prettier HTML output:
+
+<CodeGroup>
+
+```bash npm
+npm install --save-dev prettier
+```
+
+```bash yarn
+yarn add --dev prettier
+```
+
+```bash pnpm
+pnpm add --save-dev prettier
+```
+
+```bash bun
+bun add --dev prettier
+```
+
+</CodeGroup>
+
+## Tailwind CSS Setup
+
+While Better Svelte Email works without Tailwind CSS, you'll get the best experience using Tailwind v4.
+
+### Install Tailwind CSS v4
+
+<CodeGroup>
+
+```bash npm
+npm install --save-dev tailwindcss @tailwindcss/vite
+```
+
+```bash yarn
+yarn add --dev tailwindcss @tailwindcss/vite
+```
+
+```bash pnpm
+pnpm add --save-dev tailwindcss @tailwindcss/vite
+```
+
+```bash bun
+bun add --dev tailwindcss @tailwindcss/vite
+```
+
+</CodeGroup>
+
+### Configure Tailwind (Optional)
+
+Better Svelte Email automatically processes Tailwind classes. No additional configuration is required unless you want to use custom Tailwind settings in your emails.
+
+<Tip>
+  You can pass your app's CSS file (with Tailwind config and custom variables) to the Renderer for consistent styling between your app and emails. See the [Custom Tailwind Config guide](/guides/custom-tailwind-config) for details.
+</Tip>
+
+## Peer Dependencies
+
+Better Svelte Email requires these peer dependencies (likely already installed in your project):
+
+- `svelte` >= 5.14.3
+- `@sveltejs/kit` >= 2 (optional, only needed if using SvelteKit features)
+
+## Verify Installation
+
+Verify your installation by creating a simple test email:
+
+```svelte filename="src/lib/emails/test.svelte"
+<script>
+  import { Html, Head, Body, Text } from 'better-svelte-email';
+</script>
+
+<Html>
+  <Head />
+  <Body>
+    <Text>Hello from Better Svelte Email!</Text>
+  </Body>
+</Html>
+```
+
+Then render it:
+
+```typescript filename="src/test-email.ts"
+import Renderer from 'better-svelte-email/render';
+import TestEmail from '$lib/emails/test.svelte';
+
+const { render } = new Renderer();
+const html = await render(TestEmail);
+
+console.log(html);
+```
+
+If the installation was successful, you should see rendered HTML output.
+
+## TypeScript Support
+
+Better Svelte Email is written in TypeScript and includes comprehensive type definitions out of the box. No additional setup is required.
+
+All components and APIs are fully typed:
+
+```typescript
+import Renderer, { type RenderOptions, type RendererOptions } from 'better-svelte-email/render';
+import type { TailwindConfig } from 'better-svelte-email/render';
+
+// Full type safety and autocomplete
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  }
+});
+```
+
+## Package Exports
+
+Better Svelte Email provides several entry points for different use cases:
+
+### Main Package
+
+```typescript
+import { Html, Head, Body, /* ... */ } from 'better-svelte-email';
+// or
+import { Html, Head, Body } from 'better-svelte-email/components';
+```
+
+### Individual Components
+
+```typescript
+import Button from 'better-svelte-email/components/Button.svelte';
+import Text from 'better-svelte-email/components/Text.svelte';
+```
+
+### Renderer
+
+```typescript
+import Renderer, { toPlainText } from 'better-svelte-email/render';
+```
+
+### Email Preview
+
+```typescript
+import EmailPreview from 'better-svelte-email/preview/EmailPreview.svelte';
+import { createEmailInfo } from 'better-svelte-email/preview';
+```
+
+### Utilities
+
+```typescript
+import { styleToString, pxToPt, combineStyles } from 'better-svelte-email/utils';
+```
+
+## Next Steps
+
+Now that you have Better Svelte Email installed, you're ready to create your first email:
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Build your first email in under 5 minutes.
+  </Card>
+  <Card title="Components" icon="cube" href="/components/overview">
+    Explore the complete component library.
+  </Card>
+  <Card title="Renderer API" icon="code" href="/core/rendering">
+    Learn how to render emails to HTML.
+  </Card>
+  <Card title="Email Preview" icon="eye" href="/guides/email-preview">
+    Set up visual email previews in development.
+  </Card>
+</CardGroup>

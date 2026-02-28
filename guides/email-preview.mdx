@@ -1,0 +1,209 @@
+---
+title: 'Email Preview'
+description: 'Set up and use the EmailPreview component to develop and test email templates'
+icon: 'eye'
+---
+
+The `EmailPreview` component provides a visual development environment for creating and testing your email templates. It includes features like live preview, HTML source and code source viewing, and test email sending—all within your SvelteKit application.
+
+## Quick start
+
+See your email templates in action by visiting the [live preview demo](/preview).
+
+## Setup
+
+<Steps>
+  <Step title="Create a preview route">
+    Create a new route at `src/routes/email-preview/[...email]/+page.svelte` in your SvelteKit app:
+
+    ```svelte src/routes/email-preview/[...email]/+page.svelte
+    <script lang="ts">
+      import { EmailPreview } from 'better-svelte-email/preview';
+      import { page } from '$app/state';
+    </script>
+
+    <EmailPreview {page} />
+    ```
+  </Step>
+
+  <Step title="Configure server-side logic">
+    Create a `+page.server.ts` file in the same route to load email templates and handle preview actions:
+
+    ```typescript src/routes/email-preview/[...email]/+page.server.ts
+    import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+    import { env } from '$env/dynamic/private';
+
+    export function load() {
+      const emails = emailList({
+        path: '/src/lib/emails' // optional, defaults to '/src/lib/emails'
+      });
+
+      return { emails };
+    }
+
+    export const actions = {
+      ...createEmail(),
+      ...sendEmail({ 
+        resendApiKey: env.RESEND_API_KEY, 
+        from: 'onboarding@resend.dev' 
+      })
+    };
+    ```
+  </Step>
+
+  <Step title="Add your API key (optional)">
+    To enable test email sending, add your Resend API key to your `.env` file:
+
+    ```bash .env
+    RESEND_API_KEY=re_your_api_key_here
+    ```
+
+    Get your API key from [Resend](https://resend.com/docs/dashboard/api-keys/introduction).
+  </Step>
+
+  <Step title="Navigate to the preview">
+    Start your dev server and visit `http://localhost:5173/email-preview` to see your email templates.
+  </Step>
+</Steps>
+
+## Configuration options
+
+### Custom email folder
+
+By default, the preview looks for email templates in `/src/lib/emails`. Customize this path:
+
+```typescript
+export function load() {
+  const emails = emailList({
+    path: '/src/lib/custom-emails'
+  });
+
+  return { emails };
+}
+```
+
+### Custom root path
+
+If your project structure requires it, specify a custom root path:
+
+```typescript
+export function load() {
+  const emails = emailList({
+    root: process.cwd(),
+    path: '/src/lib/emails'
+  });
+
+  return { emails };
+}
+```
+
+### Custom sender address
+
+Change the default "from" address for test emails:
+
+```typescript
+export const actions = {
+  ...createEmail(),
+  ...sendEmail({ 
+    resendApiKey: env.RESEND_API_KEY,
+    from: 'noreply@yourdomain.com'
+  })
+};
+```
+
+## Using with custom Tailwind config
+
+To use your custom Tailwind configuration or app CSS in the preview, pass a `Renderer` instance:
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import { createEmail, sendEmail } from 'better-svelte-email/preview';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({ 
+  customCSS: layoutStyles,
+  tailwindConfig: {
+    theme: { 
+      extend: { 
+        colors: { brand: '#FF3E00' } 
+      } 
+    }
+  }
+});
+
+export const actions = {
+  ...createEmail({ renderer }),
+  ...sendEmail({ renderer, resendApiKey: env.RESEND_API_KEY })
+};
+```
+
+See [Custom Tailwind Config](/guides/custom-tailwind-config) for more details.
+
+## Vercel deployment
+
+<Warning>
+  If you're deploying to Vercel serverless functions, the `createEmail` and `sendEmail` actions require additional configuration to work properly.
+</Warning>
+
+Vercel's serverless environment has limitations with dynamic imports. You'll need to create custom serverless functions. See [this example implementation](https://github.com/Konixy/better-svelte-email/blob/main/src/routes/preview/%5B...email%5D/%2Bpage.server.ts) for reference.
+
+## Troubleshooting
+
+### No templates showing up
+
+Make sure:
+
+- Your email templates are in the correct directory (default: `/src/lib/emails`)
+- Your files have the `.svelte` extension
+- The path in `emailList()` matches your actual directory structure
+
+### Test emails not sending
+
+Verify that:
+
+- Your `RESEND_API_KEY` is set in your `.env` file
+- The API key is valid and has sending permissions
+- You've imported and spread the `sendEmail` action in your `+page.server.ts`
+
+### Preview route not found
+
+Ensure:
+
+- You've created both `+page.svelte` and `+page.server.ts` in your preview route
+- Your dev server is running
+- You're navigating to the correct URL (e.g., `http://localhost:5173/email-preview`)
+
+## API reference
+
+### emailList(options)
+
+Loads all email templates from the specified directory.
+
+**Parameters:**
+
+- `options.path` (string, optional) - Relative path from root to emails folder (default: `/src/lib/emails`)
+- `options.root` (string, optional) - Absolute path to project root (auto-detected if not provided)
+
+**Returns:** `PreviewData` object with:
+
+- `files` (string[] | null) - Array of email template file names
+- `path` (string | null) - Path to the emails directory
+
+### createEmail(options)
+
+SvelteKit form action that renders an email component to HTML.
+
+**Parameters:**
+
+- `options.renderer` (Renderer, optional) - Custom renderer instance with Tailwind config
+
+### sendEmail(options)
+
+Returns a SvelteKit form action that sends test emails.
+
+**Parameters:**
+
+- `options.resendApiKey` (string, optional) - Your Resend API key
+- `options.customSendEmailFunction` (function, optional) - Custom email sending function
+- `options.renderer` (Renderer, optional) - Custom renderer instance with Tailwind config
+- `options.from` (string, optional) - Sender email address (defaults to `'better-svelte-email <onboarding@resend.dev>'`)

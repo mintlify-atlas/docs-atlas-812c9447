@@ -1,0 +1,431 @@
+---
+title: 'Sending Emails'
+description: 'Send emails using Resend, SendGrid, or any custom email provider'
+icon: 'paper-plane'
+---
+
+Better Svelte Email works with any email service provider. This guide shows you how to send emails using popular providers and custom implementations.
+
+## Using Resend
+
+Resend is the recommended email provider for its simplicity and developer experience.
+
+<Steps>
+  <Step title="Install Resend">
+    ```bash
+    npm install resend
+    ```
+  </Step>
+
+  <Step title="Get your API key">
+    Sign up at [resend.com](https://resend.com) and get your API key from the [dashboard](https://resend.com/docs/dashboard/api-keys/introduction).
+  </Step>
+
+  <Step title="Add to environment variables">
+    ```bash .env
+    PRIVATE_RESEND_API_KEY=re_your_api_key_here
+    ```
+  </Step>
+
+  <Step title="Send your first email">
+    ```typescript src/routes/api/send-email/+server.ts
+    import Renderer from 'better-svelte-email/render';
+    import { Resend } from 'resend';
+    import { env } from '$env/dynamic/private';
+    import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+    const renderer = new Renderer();
+    const resend = new Resend(env.PRIVATE_RESEND_API_KEY);
+
+    export async function POST({ request }) {
+      const { name, email } = await request.json();
+
+      const html = await renderer.render(WelcomeEmail, { 
+        props: { name } 
+      });
+
+      const { data, error } = await resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: email,
+        subject: 'Welcome to our platform!',
+        html
+      });
+
+      if (error) {
+        return new Response(
+          JSON.stringify({ error: error.message }), 
+          { status: 400 }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, id: data.id })
+      );
+    }
+    ```
+  </Step>
+</Steps>
+
+### With plain text version
+
+Include a plain text version for better accessibility and spam score:
+
+```typescript
+import { toPlainText } from 'better-svelte-email/render';
+
+const html = await renderer.render(WelcomeEmail, { props: { name } });
+const text = toPlainText(html);
+
+await resend.emails.send({
+  from: 'onboarding@resend.dev',
+  to: email,
+  subject: 'Welcome!',
+  html,
+  text // Plain text version
+});
+```
+
+## Using SendGrid
+
+SendGrid is a popular enterprise email service.
+
+<Steps>
+  <Step title="Install SendGrid">
+    ```bash
+    npm install @sendgrid/mail
+    ```
+  </Step>
+
+  <Step title="Get your API key">
+    Create an API key in your [SendGrid dashboard](https://app.sendgrid.com/settings/api_keys).
+  </Step>
+
+  <Step title="Configure environment">
+    ```bash .env
+    SENDGRID_API_KEY=SG.your_api_key_here
+    ```
+  </Step>
+
+  <Step title="Send emails">
+    ```typescript src/routes/api/send-email/+server.ts
+    import Renderer from 'better-svelte-email/render';
+    import sgMail from '@sendgrid/mail';
+    import { env } from '$env/dynamic/private';
+    import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+    sgMail.setApiKey(env.SENDGRID_API_KEY);
+    const renderer = new Renderer();
+
+    export async function POST({ request }) {
+      const { name, email } = await request.json();
+
+      const html = await renderer.render(WelcomeEmail, { 
+        props: { name } 
+      });
+
+      try {
+        await sgMail.send({
+          from: 'noreply@yourdomain.com',
+          to: email,
+          subject: 'Welcome!',
+          html
+        });
+
+        return new Response(
+          JSON.stringify({ success: true })
+        );
+      } catch (error) {
+        console.error('SendGrid error:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to send email' }), 
+          { status: 500 }
+        );
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Using Mailgun
+
+Mailgun is another popular email service provider.
+
+<Steps>
+  <Step title="Install Mailgun">
+    ```bash
+    npm install mailgun.js form-data
+    ```
+  </Step>
+
+  <Step title="Configure credentials">
+    ```bash .env
+    MAILGUN_API_KEY=your_api_key
+    MAILGUN_DOMAIN=mg.yourdomain.com
+    ```
+  </Step>
+
+  <Step title="Send emails">
+    ```typescript
+    import Renderer from 'better-svelte-email/render';
+    import formData from 'form-data';
+    import Mailgun from 'mailgun.js';
+    import { env } from '$env/dynamic/private';
+    import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+    const mailgun = new Mailgun(formData);
+    const mg = mailgun.client({
+      username: 'api',
+      key: env.MAILGUN_API_KEY
+    });
+    const renderer = new Renderer();
+
+    export async function POST({ request }) {
+      const { name, email } = await request.json();
+
+      const html = await renderer.render(WelcomeEmail, { 
+        props: { name } 
+      });
+
+      try {
+        await mg.messages.create(env.MAILGUN_DOMAIN, {
+          from: 'noreply@yourdomain.com',
+          to: email,
+          subject: 'Welcome!',
+          html
+        });
+
+        return new Response(
+          JSON.stringify({ success: true })
+        );
+      } catch (error) {
+        console.error('Mailgun error:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to send email' }), 
+          { status: 500 }
+        );
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Using with email preview
+
+The `sendEmail` helper works with any provider through custom send functions.
+
+### With Resend (default)
+
+```typescript src/routes/email-preview/[...email]/+page.server.ts
+import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+import { env } from '$env/dynamic/private';
+
+export function load() {
+  return { emails: emailList() };
+}
+
+export const actions = {
+  ...createEmail(),
+  ...sendEmail({ 
+    resendApiKey: env.RESEND_API_KEY,
+    from: 'onboarding@resend.dev'
+  })
+};
+```
+
+### With custom provider
+
+<CodeGroup>
+
+```typescript SendGrid
+import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+import sgMail from '@sendgrid/mail';
+import { env } from '$env/dynamic/private';
+
+sgMail.setApiKey(env.SENDGRID_API_KEY);
+
+export function load() {
+  return { emails: emailList() };
+}
+
+export const actions = {
+  ...createEmail(),
+  ...sendEmail({
+    customSendEmailFunction: async ({ from, to, subject, html }) => {
+      try {
+        await sgMail.send({ from, to, subject, html });
+        return { success: true };
+      } catch (error) {
+        console.error('SendGrid error:', error);
+        return { success: false, error };
+      }
+    }
+  })
+};
+```
+
+```typescript Mailgun
+import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+import formData from 'form-data';
+import Mailgun from 'mailgun.js';
+import { env } from '$env/dynamic/private';
+
+const mailgun = new Mailgun(formData);
+const mg = mailgun.client({
+  username: 'api',
+  key: env.MAILGUN_API_KEY
+});
+
+export function load() {
+  return { emails: emailList() };
+}
+
+export const actions = {
+  ...createEmail(),
+  ...sendEmail({
+    customSendEmailFunction: async ({ from, to, subject, html }) => {
+      try {
+        await mg.messages.create(env.MAILGUN_DOMAIN, {
+          from,
+          to,
+          subject,
+          html
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Mailgun error:', error);
+        return { success: false, error };
+      }
+    }
+  })
+};
+```
+
+```typescript Postmark
+import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+import { ServerClient } from 'postmark';
+import { env } from '$env/dynamic/private';
+
+const client = new ServerClient(env.POSTMARK_API_TOKEN);
+
+export function load() {
+  return { emails: emailList() };
+}
+
+export const actions = {
+  ...createEmail(),
+  ...sendEmail({
+    customSendEmailFunction: async ({ from, to, subject, html }) => {
+      try {
+        await client.sendEmail({
+          From: from,
+          To: to,
+          Subject: subject,
+          HtmlBody: html
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Postmark error:', error);
+        return { success: false, error };
+      }
+    }
+  })
+};
+```
+
+</CodeGroup>
+
+## Custom send function signature
+
+Your custom send function must match this signature:
+
+```typescript
+type CustomSendEmailFunction = (
+  email: {
+    from: string;
+    to: string;
+    subject: string;
+    html: string;
+  }
+) => Promise<{
+  success: boolean;
+  error?: any;
+}>;
+```
+
+**Parameters:**
+
+- `from` - Sender email address
+- `to` - Recipient email address
+- `subject` - Email subject line
+- `html` - Rendered HTML content
+
+**Returns:**
+
+- `success` - `true` if email was sent successfully
+- `error` - Error details if sending failed (optional)
+
+## SvelteKit form actions
+
+Send emails from SvelteKit form actions:
+
+```typescript src/routes/signup/+page.server.ts
+import Renderer from 'better-svelte-email/render';
+import { Resend } from 'resend';
+import { env } from '$env/dynamic/private';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+import { fail } from '@sveltejs/kit';
+
+const renderer = new Renderer();
+const resend = new Resend(env.PRIVATE_RESEND_API_KEY);
+
+export const actions = {
+  signup: async ({ request }) => {
+    const data = await request.formData();
+    const name = data.get('name');
+    const email = data.get('email');
+
+    // Validate inputs
+    if (!name || !email) {
+      return fail(400, { missing: true });
+    }
+
+    // Render and send email
+    const html = await renderer.render(WelcomeEmail, { 
+      props: { name } 
+    });
+
+    const { error } = await resend.emails.send({
+      from: 'onboarding@resend.dev',
+      to: email as string,
+      subject: 'Welcome!',
+      html
+    });
+
+    if (error) {
+      return fail(500, { error: error.message });
+    }
+
+    return { success: true };
+  }
+};
+```
+
+## Tips and best practices
+
+- **Use environment variables**: Never hardcode API keys in your source code.
+- **Error handling**: Always handle errors gracefully and log them for debugging.
+- **Plain text versions**: Include plain text versions for better deliverability.
+- **Rate limiting**: Implement rate limiting to prevent abuse.
+- **Testing**: Use test mode or sandbox environments during development.
+- **Monitoring**: Set up monitoring to track email delivery and failures.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Email Preview" icon="eye" href="/guides/email-preview">
+    Set up the preview component for development
+  </Card>
+  <Card title="Testing" icon="flask" href="/guides/testing">
+    Learn how to test your email templates
+  </Card>
+</CardGroup>

@@ -1,0 +1,455 @@
+---
+title: Button & Link Components
+description: Button and Link components for calls-to-action and hyperlinks with email client compatibility.
+---
+
+Interactive components for creating clickable elements in your emails.
+
+## Button
+
+A call-to-action button with automatic MSO (Microsoft Outlook) support for consistent rendering across email clients.
+
+### Props
+
+<ParamField path="href" type="string" default="#">
+  The URL the button links to
+</ParamField>
+
+<ParamField path="target" type="string" default="_blank">
+  Link target attribute
+</ParamField>
+
+<ParamField path="pX" type="number" default="0">
+  Horizontal padding in pixels (left and right)
+</ParamField>
+
+<ParamField path="pY" type="number" default="0">
+  Vertical padding in pixels (top and bottom)
+</ParamField>
+
+<ParamField path="style" type="string">
+  Inline CSS styles
+</ParamField>
+
+<ParamField path="class" type="string">
+  Tailwind CSS classes or custom CSS classes
+</ParamField>
+
+<ParamField path="children" type="snippet" required>
+  Button text content
+</ParamField>
+
+All standard HTML anchor attributes are supported via `HTMLAnchorAttributes`.
+
+### Features
+
+- **MSO Support**: Automatically includes conditional comments for Outlook compatibility
+- **Padding Props**: Use `pX` and `pY` for precise padding that works in Outlook
+- **Display**: Renders as `inline-block` for proper sizing
+- **Text Decoration**: None by default for clean appearance
+
+### Usage
+
+```svelte
+<Button 
+  href="https://example.com/action"
+  class="rounded bg-blue-600 px-6 py-3 text-white"
+>
+  Click Me
+</Button>
+```
+
+<Tabs>
+  <Tab title="Basic Button">
+    ```svelte
+    <Button 
+      href="https://example.com"
+      class="bg-blue-600 text-white"
+      pX={20}
+      pY={12}
+    >
+      Get Started
+    </Button>
+    ```
+  </Tab>
+  
+  <Tab title="Styled Buttons">
+    ```svelte
+    <!-- Primary Button -->
+    <Button 
+      href="https://example.com/signup"
+      class="rounded bg-blue-600 px-6 py-3 text-base font-semibold text-white"
+    >
+      Sign Up Now
+    </Button>
+
+    <!-- Secondary Button -->
+    <Button 
+      href="https://example.com/learn-more"
+      class="rounded border-2 border-gray-300 bg-white px-6 py-3 text-gray-700"
+    >
+      Learn More
+    </Button>
+
+    <!-- Success Button -->
+    <Button 
+      href="https://example.com/confirm"
+      class="rounded bg-green-600 px-5 py-2 text-white"
+    >
+      Confirm Order
+    </Button>
+    ```
+  </Tab>
+  
+  <Tab title="With Padding Props">
+    ```svelte
+    <!-- Using pX and pY for Outlook compatibility -->
+    <Button 
+      href="https://example.com"
+      pX={24}
+      pY={12}
+      class="rounded bg-indigo-600 text-white"
+    >
+      Button with Pixel Padding
+    </Button>
+
+    <!-- Large button with more padding -->
+    <Button 
+      href="https://example.com"
+      pX={32}
+      pY={16}
+      class="rounded bg-purple-600 text-lg text-white"
+    >
+      Large Button
+    </Button>
+    ```
+  </Tab>
+  
+  <Tab title="Real Examples">
+    ```svelte
+    <!-- From Vercel invite email -->
+    <Section class="mb-8 mt-8 text-center">
+      <Button
+        class="rounded bg-black px-5 py-3 text-center text-xs font-semibold text-white"
+        href="https://vercel.com/teams/invite"
+      >
+        Join the team
+      </Button>
+    </Section>
+
+    <!-- Call to action -->
+    <Section class="text-center">
+      <Button 
+        href="https://example.com/offer"
+        class="rounded-full bg-gradient-to-r from-blue-500 to-blue-700 px-8 py-4 text-lg font-bold text-white shadow-lg"
+      >
+        Claim Your 50% Discount
+      </Button>
+    </Section>
+
+    <!-- Multiple buttons -->
+    <Row>
+      <Column align="center">
+        <Button 
+          href="https://example.com/accept"
+          class="mr-2 rounded bg-green-600 px-6 py-3 text-white"
+        >
+          Accept
+        </Button>
+      </Column>
+      <Column align="center">
+        <Button 
+          href="https://example.com/decline"
+          class="ml-2 rounded bg-gray-400 px-6 py-3 text-white"
+        >
+          Decline
+        </Button>
+      </Column>
+    </Row>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Link
+
+A styled hyperlink for inline text links and secondary actions.
+
+### Props
+
+<ParamField path="href" type="string" required>
+  The URL to link to
+</ParamField>
+
+<ParamField path="target" type="string" default="_blank">
+  Link target attribute
+</ParamField>
+
+<ParamField path="style" type="string">
+  Inline CSS styles (merged with defaults)
+</ParamField>
+
+<ParamField path="class" type="string">
+  Tailwind CSS classes or custom CSS classes
+</ParamField>
+
+<ParamField path="children" type="snippet" required>
+  Link text content
+</ParamField>
+
+All standard HTML anchor attributes are supported via `HTMLAnchorAttributes`.
+
+### Default Styles
+
+- `text-decoration-line: none` - No underline by default
+- `color: #067df7` - Blue link color
+
+### Usage
+
+```svelte
+<Link href="https://example.com" class="text-blue-600">
+  Click here
+</Link>
+```
+
+<Tabs>
+  <Tab title="Basic Links">
+    ```svelte
+    <Text>
+      Visit our <Link href="https://example.com">website</Link> for more information.
+    </Text>
+
+    <Link href="https://example.com/privacy" class="text-sm text-gray-600">
+      Privacy Policy
+    </Link>
+    ```
+  </Tab>
+  
+  <Tab title="Styled Links">
+    ```svelte
+    <!-- Blue underlined link -->
+    <Link 
+      href="https://example.com" 
+      class="text-blue-600 underline"
+    >
+      Learn More
+    </Link>
+
+    <!-- Custom color link -->
+    <Link 
+      href="https://example.com/help" 
+      class="text-purple-600 hover:text-purple-800"
+    >
+      Get Help
+    </Link>
+
+    <!-- Subtle link -->
+    <Link 
+      href="https://example.com/terms" 
+      class="text-xs text-gray-500"
+    >
+      Terms and Conditions
+    </Link>
+    ```
+  </Tab>
+  
+  <Tab title="Email & Phone Links">
+    ```svelte
+    <!-- Email link -->
+    <Link 
+      href="mailto:support@example.com"
+      class="text-blue-600"
+    >
+      support@example.com
+    </Link>
+
+    <!-- Phone link -->
+    <Link 
+      href="tel:+1234567890"
+      class="text-blue-600"
+    >
+      +1 (234) 567-890
+    </Link>
+    ```
+  </Tab>
+  
+  <Tab title="Real Examples">
+    ```svelte
+    <!-- From Apple receipt -->
+    <Text class="text-center text-sm font-medium text-gray-900">
+      Save 3% on all your Apple purchases with Apple Card.
+      {' '}
+      <Link href="https://www.apple.com/apple-card/">
+        Apply and use in minutes
+      </Link>
+    </Text>
+
+    <!-- Footer links -->
+    <Text class="text-center text-xs text-gray-600">
+      <Link href="https://example.com/account" class="text-blue-600">
+        Account Settings
+      </Link>
+      {' • '}
+      <Link href="https://example.com/terms" class="text-blue-600">
+        Terms of Sale
+      </Link>
+      {' • '}
+      <Link href="https://example.com/privacy" class="text-blue-600">
+        Privacy Policy
+      </Link>
+    </Text>
+
+    <!-- Inline link in paragraph -->
+    <Text class="text-sm text-black">
+      <strong>Alan Turing</strong> (
+      <Link href="mailto:alan@example.com" class="text-blue-600">
+        alan@example.com
+      </Link>
+      ) has invited you to join the team.
+    </Text>
+    ```
+  </Tab>
+</Tabs>
+
+## Button vs Link
+
+When to use each component:
+
+<Tabs>
+  <Tab title="Use Button For">
+    - Primary calls-to-action
+    - Important actions (Sign Up, Buy Now, Confirm)
+    - Standalone clickable elements
+    - Actions that need visual prominence
+    
+    ```svelte
+    <Section class="text-center">
+      <Button 
+        href="https://example.com/checkout"
+        class="rounded bg-green-600 px-8 py-4 text-white"
+      >
+        Complete Purchase
+      </Button>
+    </Section>
+    ```
+  </Tab>
+  
+  <Tab title="Use Link For">
+    - Inline text links
+    - Secondary actions
+    - Footer links
+    - Email/phone links
+    - Navigation within content
+    
+    ```svelte
+    <Text>
+      Need help? <Link href="https://example.com/support">Contact support</Link>
+      or view our <Link href="https://example.com/faq">FAQ</Link>.
+    </Text>
+    ```
+  </Tab>
+</Tabs>
+
+## Complete Example
+
+```svelte
+<script lang="ts">
+  import {
+    Html,
+    Head,
+    Body,
+    Container,
+    Section,
+    Heading,
+    Text,
+    Button,
+    Link,
+    Hr
+  } from 'better-svelte-email';
+</script>
+
+<Html>
+  <Head />
+  <Body class="bg-gray-50 font-sans">
+    <Container class="mx-auto my-10 rounded bg-white p-8 shadow-lg">
+      <!-- Header -->
+      <Section class="mb-8">
+        <Heading as="h1" class="text-center text-3xl font-bold text-gray-900">
+          Welcome to Our Service!
+        </Heading>
+      </Section>
+
+      <!-- Main content -->
+      <Section class="mb-8">
+        <Text class="text-gray-700">
+          We're excited to have you on board. Click the button below to
+          get started with your account setup.
+        </Text>
+      </Section>
+
+      <!-- Primary CTA -->
+      <Section class="mb-8 text-center">
+        <Button 
+          href="https://example.com/setup"
+          class="rounded bg-blue-600 px-8 py-4 text-lg font-semibold text-white"
+        >
+          Complete Setup
+        </Button>
+      </Section>
+
+      <!-- Alternative action -->
+      <Section class="mb-6">
+        <Text class="text-center text-sm text-gray-600">
+          or <Link href="https://example.com/learn-more">learn more about our features</Link>
+        </Text>
+      </Section>
+
+      <Hr class="my-6" />
+
+      <!-- Footer links -->
+      <Section>
+        <Text class="text-center text-xs text-gray-500">
+          <Link href="https://example.com/help" class="text-gray-600">
+            Help Center
+          </Link>
+          {' • '}
+          <Link href="https://example.com/privacy" class="text-gray-600">
+            Privacy Policy
+          </Link>
+          {' • '}
+          <Link href="mailto:support@example.com" class="text-gray-600">
+            Contact Support
+          </Link>
+        </Text>
+      </Section>
+    </Container>
+  </Body>
+</Html>
+```
+
+## Best Practices
+
+<Tip>
+  Use the `pX` and `pY` props on Button for precise padding control that works reliably in Outlook.
+</Tip>
+
+<Warning>
+  Always provide an `href` attribute for buttons and links. Using `#` as a placeholder is acceptable for testing.
+</Warning>
+
+<Note>
+  The Button component automatically includes MSO conditional comments for Outlook compatibility. No additional configuration needed.
+</Note>
+
+<Tip>
+  For the best user experience, make button text clear and action-oriented ("Get Started", "Download Now", "Confirm Order").
+</Tip>
+
+<Warning>
+  Avoid using `target="_self"` on buttons/links in emails, as it can cause navigation issues in webmail clients. Stick with the default `_blank`.
+</Warning>
+
+<Tip>
+  When using Link inside Text components, the link will inherit the text color unless you override it with a class.
+</Tip>

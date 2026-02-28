@@ -1,0 +1,209 @@
+---
+title: Renderer
+description: Email renderer that converts Svelte components to email-safe HTML with inlined Tailwind styles
+---
+
+## Overview
+
+The `Renderer` class is the core of Better Svelte Email. It converts Svelte components into email-safe HTML with fully inlined Tailwind CSS styles, ensuring maximum compatibility across email clients.
+
+## Import
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+```
+
+## Constructor
+
+The `Renderer` constructor supports two overloads for backward compatibility:
+
+### Constructor Overload 1: With RendererOptions
+
+```ts
+new Renderer(options?: RendererOptions)
+```
+
+<ParamField path="options" type="RendererOptions">
+  Configuration options for the renderer. See [RendererOptions](/api/renderer-options) for details.
+</ParamField>
+
+### Constructor Overload 2: Legacy TailwindConfig (Deprecated)
+
+```ts
+new Renderer(tailwindConfig?: TailwindConfig)
+```
+
+<ParamField path="tailwindConfig" type="TailwindConfig">
+  Tailwind CSS configuration object (v3). This overload is maintained for backward compatibility. Use the `RendererOptions` overload instead.
+</ParamField>
+
+<Note>
+  The constructor automatically detects which overload you're using based on the argument provided. If the object contains `tailwindConfig`, `customCSS`, or `baseFontSize` properties, it's treated as `RendererOptions`. Otherwise, it's treated as a legacy `TailwindConfig`.
+</Note>
+
+## Methods
+
+### render()
+
+Renders a Svelte component to email-safe HTML with inlined Tailwind CSS.
+
+```ts
+render(component: any, options?: RenderOptions): Promise<string>
+```
+
+<ParamField path="component" type="any" required>
+  The Svelte component to render. Import your `.svelte` file and pass it directly.
+</ParamField>
+
+<ParamField path="options" type="RenderOptions">
+  Options for rendering the component. See [RenderOptions](/api/render-options) for details.
+</ParamField>
+
+<ResponseField name="return" type="Promise<string>">
+  A promise that resolves to an email-safe HTML string with inlined styles and XHTML 1.0 Transitional DOCTYPE.
+</ResponseField>
+
+#### What render() does automatically
+
+The `render()` method performs several transformations to ensure email compatibility:
+
+- **Inlines Tailwind classes** - Converts all Tailwind utility classes to inline `style` attributes
+- **Extracts media queries** - Places non-inlinable styles (responsive classes, pseudo-classes) into a `<style>` tag in the `<head>`
+- **Replaces DOCTYPE** - Changes DOCTYPE to XHTML 1.0 Transitional for better email client compatibility
+- **Removes comments** - Strips HTML comments from the output
+- **Cleans Svelte artifacts** - Removes Svelte-specific attributes and markers
+- **Resolves CSS variables** - Resolves custom properties defined in `customCSS` or Tailwind config
+- **Applies global styles** - Inlines styles from global selectors (`*`, element selectors, `:root`)
+
+<Note>
+  If you use non-inlinable Tailwind classes (like responsive utilities or hover states), your component **must** include a `<head>` element. The renderer will inject a `<style>` tag with media queries into it. Without a `<head>`, the render will throw an error.
+</Note>
+
+## Usage Examples
+
+### Basic usage
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(WelcomeEmail);
+```
+
+### With custom Tailwind configuration
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import EmailComponent from '$lib/emails/email.svelte';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  }
+});
+
+const html = await renderer.render(EmailComponent);
+```
+
+### With custom CSS (e.g., app theme variables)
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import EmailComponent from '$lib/emails/email.svelte';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({
+  customCSS: layoutStyles
+});
+
+const html = await renderer.render(EmailComponent);
+```
+
+### With component props
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import PasswordReset from '$lib/emails/password-reset.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(PasswordReset, {
+  props: {
+    username: 'john_doe',
+    resetUrl: 'https://example.com/reset?token=abc123'
+  }
+});
+```
+
+### Complete example with all options
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import EmailComponent from '$lib/emails/email.svelte';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  },
+  customCSS: layoutStyles,
+  baseFontSize: 16
+});
+
+const html = await renderer.render(EmailComponent, {
+  props: { name: 'John' }
+});
+```
+
+### Using CSS variables with @property
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import EmailComponent from '$lib/emails/email.svelte';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          'custom-color': 'var(--my-color)'
+        }
+      }
+    }
+  },
+  customCSS: '@property --my-color { syntax: "<color>"; inherits: false; initial-value: #00ff00; }'
+});
+
+const html = await renderer.render(EmailComponent);
+```
+
+## Type Definitions
+
+```ts
+export type TailwindConfig = Omit<Config, 'content'>;
+
+export default class Renderer {
+  constructor(tailwindConfig?: TailwindConfig);
+  constructor(options?: RendererOptions);
+  
+  render(component: any, options?: RenderOptions): Promise<string>;
+}
+```
+
+## See Also
+
+- [RendererOptions](/api/renderer-options) - Configuration options for the Renderer
+- [RenderOptions](/api/render-options) - Options for the render() method
+- [toPlainText()](/api/to-plain-text) - Convert HTML to plain text

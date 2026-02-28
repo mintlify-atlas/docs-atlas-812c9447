@@ -1,0 +1,101 @@
+---
+title: 'toPlainText()'
+description: 'Convert HTML email markup to plain text'
+---
+
+## Overview
+
+The `toPlainText()` function converts HTML email markup into plain text format. It automatically strips HTML tags and formatting while preserving the textual content, making it ideal for creating plain text versions of your emails.
+
+## Import
+
+```typescript
+import { toPlainText } from 'better-svelte-email/render';
+```
+
+## Signature
+
+```typescript
+function toPlainText(markup: string): string
+```
+
+### Parameters
+
+<ParamField path="markup" type="string" required>
+  The HTML string to convert to plain text
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="string">
+  Plain text representation of the HTML markup
+</ResponseField>
+
+## Behavior
+
+The function:
+- Removes all HTML tags and attributes
+- Preserves text content and structure
+- Skips image elements (`<img>` tags)
+- Skips preview text elements (elements with id `#__better-svelte-email-preview`)
+
+## Usage Example
+
+### Basic Usage
+
+```typescript
+import Renderer from 'better-svelte-email/renderer';
+import { toPlainText } from 'better-svelte-email/render';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(WelcomeEmail, {
+  props: { name: 'John Doe' }
+});
+
+const plainText = toPlainText(html);
+console.log(plainText);
+// Output: Plain text version of the email
+```
+
+### Sending Both HTML and Plain Text
+
+```typescript
+import Renderer from 'better-svelte-email/renderer';
+import { toPlainText } from 'better-svelte-email/render';
+import { sendEmail } from './email-service';
+import OrderConfirmation from '$lib/emails/order-confirmation.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(OrderConfirmation, {
+  props: {
+    orderNumber: '12345',
+    items: [...]
+  }
+});
+
+const text = toPlainText(html);
+
+await sendEmail({
+  to: 'customer@example.com',
+  subject: 'Order Confirmation',
+  html,
+  text // Plain text fallback
+});
+```
+
+## Migration Note
+
+<Warning>
+  The deprecated `renderAsPlainText()` function from `better-svelte-email/utils` should be replaced with `toPlainText()` from `better-svelte-email/render`.
+</Warning>
+
+```typescript
+// Old (deprecated)
+import { renderAsPlainText } from 'better-svelte-email/utils';
+const text = renderAsPlainText(html);
+
+// New (recommended)
+import { toPlainText } from 'better-svelte-email/render';
+const text = toPlainText(html);
+```

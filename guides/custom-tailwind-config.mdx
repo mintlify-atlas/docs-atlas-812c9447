@@ -1,0 +1,271 @@
+---
+title: 'Custom Tailwind Configuration'
+description: 'Configure Tailwind CSS and inject custom styles into your email templates'
+icon: 'paintbrush'
+---
+
+Better Svelte Email supports custom Tailwind configurations and custom CSS injection, allowing you to maintain consistent styling between your app and emails.
+
+## Using custom Tailwind config
+
+You can extend the default Tailwind theme by passing a configuration object to the `Renderer` class. This uses Tailwind CSS v3 syntax.
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00',
+          accent: '#40B3FF'
+        },
+        fontFamily: {
+          sans: ['Inter', 'sans-serif']
+        }
+      }
+    }
+  }
+});
+
+const html = await renderer.render(WelcomeEmail, {
+  props: { name: 'John' }
+});
+```
+
+Now you can use these custom colors in your email templates:
+
+```svelte
+<Text class="text-brand font-sans">
+  Welcome to our platform!
+</Text>
+
+<Button class="bg-accent text-white">
+  Get Started
+</Button>
+```
+
+## Injecting custom CSS
+
+Inject your app's CSS (including CSS variables) into email rendering. This is especially useful for sharing theme variables between your app and emails.
+
+### Using layout CSS
+
+Import your main CSS file and pass it to the renderer:
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({ 
+  customCSS: layoutStyles 
+});
+```
+
+### Sharing shadcn-svelte theme
+
+If you're using shadcn-svelte, you can share your theme variables with your emails:
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import appStyles from 'src/app.css?raw';
+
+const renderer = new Renderer({ 
+  customCSS: appStyles 
+});
+```
+
+Then in your email templates, use the CSS variables:
+
+```svelte
+<Container class="bg-[var(--background)] text-[var(--foreground)]">
+  <Text class="text-[var(--muted-foreground)]">
+    This uses your app's theme colors!
+  </Text>
+</Container>
+```
+
+<Warning>
+  CSS variables are resolved during rendering and converted to inline styles. Email clients don't support CSS variables, so the renderer automatically resolves them for you.
+</Warning>
+
+## Combining both approaches
+
+You can use both custom Tailwind config and custom CSS together:
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({
+  customCSS: layoutStyles,
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  }
+});
+```
+
+## SvelteKit integration
+
+### API route example
+
+Create a reusable renderer in an API route:
+
+```typescript src/routes/api/send-welcome/+server.ts
+import Renderer from 'better-svelte-email/render';
+import { Resend } from 'resend';
+import { env } from '$env/dynamic/private';
+import layoutStyles from 'src/routes/layout.css?raw';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer({ 
+  customCSS: layoutStyles,
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  }
+});
+
+const resend = new Resend(env.PRIVATE_RESEND_API_KEY);
+
+export async function POST({ request }) {
+  const { name, email } = await request.json();
+
+  const html = await renderer.render(WelcomeEmail, { 
+    props: { name } 
+  });
+
+  await resend.emails.send({
+    from: 'onboarding@resend.dev',
+    to: email,
+    subject: 'Welcome!',
+    html
+  });
+
+  return new Response('Email sent');
+}
+```
+
+### Email preview integration
+
+Use the same renderer in your email preview route:
+
+```typescript src/routes/email-preview/[...email]/+page.server.ts
+import Renderer from 'better-svelte-email/render';
+import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+import { env } from '$env/dynamic/private';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({ 
+  customCSS: layoutStyles,
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  }
+});
+
+export function load() {
+  return { emails: emailList() };
+}
+
+export const actions = {
+  ...createEmail({ renderer }),
+  ...sendEmail({ 
+    renderer, 
+    resendApiKey: env.RESEND_API_KEY 
+  })
+};
+```
+
+## Advanced: Base font size
+
+By default, the renderer uses `16px` as the base font size for converting relative units (`rem`, `em`) to absolute pixels. You can customize this:
+
+```typescript
+const renderer = new Renderer({
+  baseFontSize: 14 // Use 14px as base
+});
+```
+
+This affects how `calc()` expressions with mixed units are resolved.
+
+<Note>
+  The `em` unit is treated as `rem` (relative to the base font size) since parent element context is not available during email rendering.
+</Note>
+
+## Tips and best practices
+
+- **Create a shared renderer**: Define your renderer configuration once and import it across your app to ensure consistency.
+- **Use CSS variables wisely**: CSS variables are resolved at render time, so they work perfectly for theming.
+- **Test in email clients**: Always test your emails in actual email clients, as they have varying CSS support.
+- **Keep it simple**: Email clients have limited CSS support. Stick to basic Tailwind utilities for best results.
+
+## Full configuration example
+
+Here's a complete example with all options:
+
+```typescript lib/email-renderer.ts
+import Renderer from 'better-svelte-email/render';
+import layoutStyles from 'src/routes/layout.css?raw';
+
+export const emailRenderer = new Renderer({
+  // Inject your app's CSS including theme variables
+  customCSS: layoutStyles,
+  
+  // Extend Tailwind theme
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50: '#fff7ed',
+            100: '#ffedd5',
+            500: '#f97316',
+            600: '#ea580c',
+            700: '#c2410c'
+          }
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          display: ['Lexend', 'sans-serif']
+        },
+        borderRadius: {
+          'brand': '0.75rem'
+        }
+      }
+    }
+  },
+  
+  // Custom base font size
+  baseFontSize: 16
+});
+```
+
+Then use it throughout your app:
+
+```typescript
+import { emailRenderer } from '$lib/email-renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const html = await emailRenderer.render(WelcomeEmail, {
+  props: { name: 'John' }
+});
+```

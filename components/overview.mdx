@@ -1,0 +1,112 @@
+---
+title: Components Overview
+description: A complete collection of 14 email components for building beautiful, responsive emails with Svelte and Tailwind CSS.
+---
+
+Better Svelte Email provides a comprehensive set of components designed specifically for email development. All components are email-client compatible and support Tailwind CSS classes.
+
+## Component Categories
+
+<CardGroup cols={2}>
+  <Card title="HTML Structure" icon="code" href="/components/html-head-body">
+    Html, Head, Body, and Preview components for email structure
+  </Card>
+  
+  <Card title="Layout" icon="table-cells" href="/components/layout">
+    Container, Section, Row, and Column for responsive layouts
+  </Card>
+  
+  <Card title="Typography" icon="font" href="/components/typography">
+    Heading and Text components with email-safe styling
+  </Card>
+  
+  <Card title="Interactive Elements" icon="link" href="/components/button-link">
+    Button and Link components for calls-to-action
+  </Card>
+  
+  <Card title="Media" icon="image" href="/components/media">
+    Img and Hr components for visual elements
+  </Card>
+</CardGroup>
+
+## All Components
+
+### HTML Structure
+- **Html** - Root HTML element with proper DOCTYPE
+- **Head** - Meta tags and email client compatibility settings
+- **Body** - Email body wrapper with table-based layout
+- **Preview** - Preview text shown in email client inbox
+
+### Layout Components
+- **Container** - Centered content container (default 600px max-width)
+- **Section** - Semantic section wrapper using table layout
+- **Row** - Horizontal row for multi-column layouts
+- **Column** - Column cell for grid layouts
+
+### Typography
+- **Heading** - Configurable heading (h1-h6) with margin utilities
+- **Text** - Paragraph text with email-safe defaults
+
+### Interactive
+- **Button** - Call-to-action button with MSO support
+- **Link** - Styled anchor link
+
+### Media
+- **Img** - Optimized image with email-safe defaults
+- **Hr** - Horizontal rule divider
+
+## Key Features
+
+- **Tailwind CSS Support**: Use Tailwind utility classes on all components
+- **Email Client Compatible**: Tested across major email clients
+- **TypeScript First**: Full type definitions for all props
+- **MSO Support**: Special handling for Outlook/Microsoft email clients
+- **Responsive**: Mobile-friendly with fluid layouts
+
+## Basic Example
+
+```svelte
+<script lang="ts">
+  import {
+    Html,
+    Head,
+    Body,
+    Preview,
+    Container,
+    Heading,
+    Text,
+    Button
+  } from 'better-svelte-email';
+</script>
+
+<Html>
+  <Head />
+  <Body class="bg-white font-sans">
+    <Preview preview="Welcome to our service!" />
+    <Container class="mx-auto my-10 max-w-xl">
+      <Heading as="h1" class="text-2xl font-bold">
+        Welcome!
+      </Heading>
+      <Text class="text-gray-700">
+        Thanks for signing up. We're excited to have you.
+      </Text>
+      <Button 
+        href="https://example.com/get-started"
+        class="bg-blue-600 text-white px-6 py-3 rounded"
+      >
+        Get Started
+      </Button>
+    </Container>
+  </Body>
+</Html>
+```
+
+## Next Steps
+
+Explore each component category to learn about specific props, usage patterns, and examples:
+
+- [HTML Structure Components](/components/html-head-body)
+- [Layout Components](/components/layout)
+- [Typography Components](/components/typography)
+- [Button & Link Components](/components/button-link)
+- [Media Components](/components/media)

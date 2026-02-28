@@ -1,0 +1,158 @@
+---
+title: "Introduction"
+description: "Create beautiful, responsive emails with Svelte and Tailwind CSS"
+---
+
+## What is Better Svelte Email?
+
+Better Svelte Email is a powerful library for building email templates using Svelte components with first-class Tailwind CSS support. Write emails the way you write modern web apps, and let Better Svelte Email handle the conversion to email-safe HTML.
+
+<CardGroup cols={2}>
+  <Card title="Tailwind v4 Support" icon="paintbrush">
+    Write Tailwind classes, get inline styles automatically. Supports all v4 utilities, custom classes, and responsive breakpoints.
+  </Card>
+  <Card title="Visual Email Preview" icon="eye">
+    Develop and test your emails with a built-in preview component that shows exactly how your emails will look.
+  </Card>
+  <Card title="TypeScript First" icon="code">
+    Fully typed with comprehensive type definitions. Get autocomplete and type safety out of the box.
+  </Card>
+  <Card title="Battle-Tested" icon="shield-check">
+    Over 90% test coverage with extensive unit and integration tests. Production-ready and reliable.
+  </Card>
+</CardGroup>
+
+## Why Better Svelte Email?
+
+Existing Svelte email solutions have significant limitations:
+
+- **svelte-email** hasn't been updated in over 2 years
+- **svelte-email-tailwind** suffers from stability issues and maintaining it is not sustainable anymore
+
+Better Svelte Email is a complete rewrite inspired by [React Email](https://react.email/), providing the rock-solid foundation your email infrastructure needs. It brings the simplicity, reliability, and feature richness of React Email to the Svelte ecosystem.
+
+## Key Features
+
+### Complete Tailwind Support
+
+Better Svelte Email transforms Tailwind classes into inline styles that work across all email clients:
+
+- All Tailwind v4 utilities
+- Custom Tailwind classes (`bg-[#fff]`, `my:[40px]`)
+- Dynamic Tailwind classes (`class={someVar}`)
+- Responsive breakpoints (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`)
+- Custom Tailwind configurations
+- Custom CSS injection for app theme integration
+
+### Email-Safe HTML
+
+Automatically converts your Svelte components to HTML that works reliably across all major email clients:
+
+- Inline styles for maximum compatibility
+- Media queries injected into `<head>` for responsive design
+- XHTML 1.0 Transitional DOCTYPE
+- Table-based layouts with accessible markup
+
+### Rich Component Library
+
+Pre-built components with sensible defaults for building email layouts:
+
+```svelte
+import {
+  Html, Head, Body, Preview,
+  Container, Section, Row, Column,
+  Heading, Text, Button, Link,
+  Img, Hr
+} from 'better-svelte-email';
+```
+
+All components forward regular HTML attributes, merge inline styles, and include props tuned for email-friendly rendering.
+
+### Plain Text Generation
+
+Generate plain text versions of your emails automatically for better deliverability and accessibility:
+
+```typescript
+import { toPlainText } from 'better-svelte-email/render';
+
+const plainText = toPlainText(html);
+```
+
+## Requirements
+
+Better Svelte Email requires:
+
+- **Svelte** >= v5.14.3
+- **Tailwind CSS** >= v4 (optional, but recommended)
+
+<Note>
+  For older Svelte versions, you can use [`svelte-email-tailwind`](https://github.com/steveninety/svelte-email-tailwind).
+</Note>
+
+## Quick Example
+
+Here's a simple welcome email to give you a taste of what's possible:
+
+```svelte
+<script>
+  import {
+    Html, Head, Body, Preview,
+    Container, Section, Text, Button
+  } from 'better-svelte-email';
+
+  let { name = 'there' } = $props();
+</script>
+
+<Html>
+  <Head />
+  <Body class="bg-zinc-100">
+    <Preview preview="Welcome to our platform" />
+    <Container class="m-8 mx-auto max-w-lg rounded-2xl bg-white p-8">
+      <Section class="mx-auto text-center">
+        <Text class="text-2xl font-bold text-zinc-900">
+          Welcome {name}!
+        </Text>
+        <Text class="mt-3 text-zinc-600">
+          Thanks for joining us. We're excited to have you on board.
+        </Text>
+        <Button
+          href="https://example.com/get-started"
+          pX={24}
+          pY={14}
+          class="mt-6 rounded-lg bg-orange-600 text-white"
+        >
+          Get Started
+        </Button>
+      </Section>
+    </Container>
+  </Body>
+</Html>
+```
+
+## Get Started
+
+Ready to build beautiful emails? Follow our quickstart guide:
+
+<Card
+  title="Quickstart Guide"
+  icon="rocket"
+  href="/quickstart"
+  horizontal
+>
+  Get your first email up and running in under 5 minutes.
+</Card>
+
+## Community and Support
+
+<CardGroup cols={2}>
+  <Card title="GitHub" icon="github" href="https://github.com/Konixy/better-svelte-email">
+    Star the project, report issues, and contribute.
+  </Card>
+  <Card title="Documentation" icon="book" href="/components/overview">
+    Explore the complete component library and API reference.
+  </Card>
+</CardGroup>
+
+## Acknowledgements
+
+Better Svelte Email is built by [Konixy](https://github.com/Konixy). Many components and patterns were inspired by [svelte-email-tailwind](https://github.com/steveninety/svelte-email-tailwind) and [React Email](https://react.email/). Special thanks to the authors and contributors of these excellent projects.

@@ -1,0 +1,403 @@
+---
+title: Typography Components
+description: Heading and Text components for email-safe typography with Tailwind CSS support.
+---
+
+Typography components provide email-safe text rendering with sensible defaults and full Tailwind CSS support.
+
+## Heading
+
+Flexible heading component that can render h1 through h6 elements with margin utilities.
+
+### Props
+
+<ParamField path="as" type="'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'" default="h2">
+  The heading level to render
+</ParamField>
+
+<ParamField path="children" type="snippet" required>
+  Heading text content
+</ParamField>
+
+<ParamField path="style" type="string">
+  Inline CSS styles
+</ParamField>
+
+<ParamField path="class" type="string">
+  Tailwind CSS classes or custom CSS classes
+</ParamField>
+
+### Margin Utilities
+
+The Heading component supports shorthand margin props:
+
+<ParamField path="m" type="string">
+  Margin on all sides (e.g., "16px")
+</ParamField>
+
+<ParamField path="mx" type="string">
+  Horizontal margin (left and right)
+</ParamField>
+
+<ParamField path="my" type="string">
+  Vertical margin (top and bottom)
+</ParamField>
+
+<ParamField path="mt" type="string">
+  Margin top
+</ParamField>
+
+<ParamField path="mr" type="string">
+  Margin right
+</ParamField>
+
+<ParamField path="mb" type="string">
+  Margin bottom
+</ParamField>
+
+<ParamField path="ml" type="string">
+  Margin left
+</ParamField>
+
+All standard HTML heading attributes are supported via `HTMLAttributes<HTMLHeadingElement>`.
+
+### Usage
+
+```svelte
+<Heading as="h1" class="text-2xl font-bold">
+  Welcome to Our Newsletter
+</Heading>
+```
+
+<Tabs>
+  <Tab title="Basic Headings">
+    ```svelte
+    <Heading as="h1" class="text-3xl font-bold">
+      Main Title
+    </Heading>
+
+    <Heading as="h2" class="text-2xl font-semibold">
+      Section Title
+    </Heading>
+
+    <Heading as="h3" class="text-xl">
+      Subsection Title
+    </Heading>
+    ```
+  </Tab>
+  
+  <Tab title="With Margin Props">
+    ```svelte
+    <Heading 
+      as="h1" 
+      my="32px"
+      class="text-2xl font-bold"
+    >
+      Title with Vertical Margin
+    </Heading>
+
+    <Heading 
+      as="h2" 
+      mt="24px"
+      mb="16px"
+      class="text-xl"
+    >
+      Custom Top and Bottom Margins
+    </Heading>
+
+    <Heading 
+      as="h3" 
+      m="20px"
+      class="text-lg"
+    >
+      Margin on All Sides
+    </Heading>
+    ```
+  </Tab>
+  
+  <Tab title="Styled Headings">
+    ```svelte
+    <Heading 
+      as="h1" 
+      class="mb-4 text-center text-3xl font-bold text-blue-600"
+    >
+      Welcome Back!
+    </Heading>
+
+    <Heading 
+      as="h2" 
+      class="border-b border-gray-200 pb-2 text-xl font-semibold text-gray-800"
+    >
+      Order Summary
+    </Heading>
+
+    <Heading 
+      as="h3" 
+      class="text-lg font-medium uppercase tracking-wide text-gray-600"
+    >
+      Product Details
+    </Heading>
+    ```
+  </Tab>
+  
+  <Tab title="Real Example">
+    ```svelte
+    <Container>
+      <Section>
+        <Heading 
+          as="h1" 
+          my="30px"
+          class="text-center text-2xl font-normal text-black"
+        >
+          Join <strong>Acme Corp</strong> on <strong>Vercel</strong>
+        </Heading>
+      </Section>
+      
+      <Section>
+        <Heading 
+          as="h2" 
+          mb="16px"
+          class="text-xl font-semibold text-gray-900"
+        >
+          What's Included
+        </Heading>
+        <Text>Your subscription includes...</Text>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Text
+
+Paragraph text component with email-safe default styling.
+
+### Props
+
+<ParamField path="as" type="string" default="p">
+  HTML element to render (p, span, div, etc.)
+</ParamField>
+
+<ParamField path="children" type="snippet" required>
+  Text content
+</ParamField>
+
+<ParamField path="style" type="string">
+  Inline CSS styles (merged with defaults)
+</ParamField>
+
+<ParamField path="class" type="string">
+  Tailwind CSS classes or custom CSS classes
+</ParamField>
+
+All standard HTML paragraph attributes are supported via `HTMLAttributes<HTMLParagraphElement>`.
+
+### Default Styles
+
+- `font-size: 14px` - Email-safe base size
+- `line-height: 24px` - Comfortable reading
+- `margin: 16px 0` - Vertical spacing
+
+### Usage
+
+```svelte
+<Text class="text-gray-700">
+  This is a paragraph of text in your email.
+</Text>
+```
+
+<Tabs>
+  <Tab title="Basic Text">
+    ```svelte
+    <Text>
+      This is a standard paragraph with default styling.
+    </Text>
+
+    <Text class="text-gray-600">
+      This paragraph has custom text color.
+    </Text>
+    ```
+  </Tab>
+  
+  <Tab title="Custom Element">
+    ```svelte
+    <Text as="span" class="font-bold">
+      Inline bold text
+    </Text>
+
+    <Text as="div" class="rounded bg-blue-50 p-4">
+      Text in a div wrapper with background
+    </Text>
+    ```
+  </Tab>
+  
+  <Tab title="Styled Text">
+    ```svelte
+    <Text class="text-sm text-gray-500">
+      Small gray text for secondary information
+    </Text>
+
+    <Text class="text-lg font-semibold text-gray-900">
+      Larger, bolder text for emphasis
+    </Text>
+
+    <Text class="text-center italic text-gray-600">
+      Centered italic text
+    </Text>
+    ```
+  </Tab>
+  
+  <Tab title="Real Examples">
+    ```svelte
+    <Container>
+      <!-- Greeting -->
+      <Text class="text-base text-black">
+        Hello {username},
+      </Text>
+
+      <!-- Main content -->
+      <Text class="text-sm leading-6 text-black">
+        <strong>{invitedByUsername}</strong> has invited you to join the
+        <strong>{teamName}</strong> team.
+      </Text>
+
+      <!-- Footer text -->
+      <Text class="text-xs leading-6 text-gray-600">
+        This invitation was intended for <span class="text-black">{username}</span>.
+        If you were not expecting this invitation, you can ignore this email.
+      </Text>
+
+      <!-- No margin text -->
+      <Text style="margin: 0; padding: 0; line-height: 1.4; font-size: 10px;" class="text-gray-600">
+        ORDER ID
+      </Text>
+    </Container>
+    ```
+  </Tab>
+</Tabs>
+
+## Typography Combinations
+
+Here are common patterns combining Heading and Text:
+
+<Tabs>
+  <Tab title="Article Layout">
+    ```svelte
+    <Section class="mb-8">
+      <Heading as="h1" mb="16px" class="text-3xl font-bold text-gray-900">
+        Your Weekly Newsletter
+      </Heading>
+      
+      <Heading as="h2" mb="12px" class="text-xl font-semibold text-gray-800">
+        Feature Article
+      </Heading>
+      
+      <Text class="mb-4 text-gray-700">
+        This week we're excited to share some amazing updates with you.
+        Our team has been working hard to bring you new features.
+      </Text>
+      
+      <Text class="text-gray-700">
+        Read on to learn about what's new and how you can take advantage
+        of these improvements.
+      </Text>
+    </Section>
+    ```
+  </Tab>
+  
+  <Tab title="Transactional Email">
+    ```svelte
+    <Container>
+      <Section>
+        <Heading as="h1" my="24px" class="text-2xl font-bold text-center">
+          Order Confirmation
+        </Heading>
+      </Section>
+      
+      <Section class="mb-6">
+        <Text class="text-gray-800">
+          Thank you for your order! We've received your payment and are
+          preparing your items for shipment.
+        </Text>
+      </Section>
+      
+      <Section>
+        <Heading as="h2" mb="12px" class="text-lg font-semibold">
+          Order Details
+        </Heading>
+        
+        <Text style="margin: 0;" class="text-sm text-gray-600">
+          Order ID: #12345
+        </Text>
+        <Text style="margin: 0;" class="text-sm text-gray-600">
+          Date: January 18, 2024
+        </Text>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+  
+  <Tab title="Marketing Email">
+    ```svelte
+    <Container class="text-center">
+      <Section class="mb-6">
+        <Heading 
+          as="h1" 
+          class="text-4xl font-bold text-blue-600"
+          my="32px"
+        >
+          Flash Sale!
+        </Heading>
+        
+        <Text class="text-xl font-semibold text-gray-900">
+          50% Off Everything
+        </Text>
+      </Section>
+      
+      <Section class="mb-8">
+        <Text class="text-lg text-gray-700">
+          For the next 24 hours only, enjoy massive discounts across
+          our entire store.
+        </Text>
+      </Section>
+      
+      <Section>
+        <Button 
+          href="https://example.com/sale"
+          class="rounded bg-blue-600 px-8 py-4 text-white"
+        >
+          Shop Now
+        </Button>
+        
+        <Text class="mt-4 text-xs text-gray-500">
+          Offer expires at midnight tonight
+        </Text>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Tip>
+  Use semantic heading levels (h1, h2, h3) to create proper document structure, even though visual styling can be customized with Tailwind classes.
+</Tip>
+
+<Note>
+  The Text component's default styles are optimized for email readability. Override with caution and always test in multiple email clients.
+</Note>
+
+<Warning>
+  Avoid using very small font sizes (below 12px) as they may be difficult to read on mobile devices.
+</Warning>
+
+<Tip>
+  Use the margin utility props (m, mx, my, mt, mr, mb, ml) on Heading for precise spacing control that works consistently across email clients.
+</Tip>
+
+<Note>
+  When using `as="span"` on Text components, remember that margin utilities may not work as expected since spans are inline elements.
+</Note>

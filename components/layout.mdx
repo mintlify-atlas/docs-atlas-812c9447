@@ -1,0 +1,444 @@
+---
+title: Layout Components
+description: Container, Section, Row, and Column components for building responsive email layouts.
+---
+
+Layout components provide the structure for your email content. They use table-based layouts for maximum compatibility across email clients.
+
+## Container
+
+A centered content container with a maximum width, typically used to constrain email content to a readable width.
+
+### Props
+
+<ParamField path="style" type="string">
+  Inline CSS styles (merged with default max-width)
+</ParamField>
+
+<ParamField path="children" type="snippet" required>
+  Container content
+</ParamField>
+
+All standard HTML table attributes are supported via `HTMLTableAttributes`.
+
+### Default Styles
+
+- `max-width: 37.5em` (600px) - Standard email width
+- `width: 100%` - Fluid on smaller screens
+- `align: center` - Centered in viewport
+
+### Usage
+
+```svelte
+<Container class="mx-auto my-10 p-5">
+  <Heading>Welcome</Heading>
+  <Text>Your content here</Text>
+</Container>
+```
+
+<Tabs>
+  <Tab title="Basic">
+    ```svelte
+    <Body>
+      <Container>
+        <Text>Centered content with 600px max width</Text>
+      </Container>
+    </Body>
+    ```
+  </Tab>
+  
+  <Tab title="With Padding">
+    ```svelte
+    <Body>
+      <Container class="p-5">
+        <Heading>Newsletter</Heading>
+        <Text>Content with padding around it</Text>
+      </Container>
+    </Body>
+    ```
+  </Tab>
+  
+  <Tab title="Custom Width">
+    ```svelte
+    <Body>
+      <Container style="max-width: 500px;">
+        <Text>Narrower container for focused content</Text>
+      </Container>
+    </Body>
+    ```
+  </Tab>
+  
+  <Tab title="Real Example">
+    ```svelte
+    <Body class="bg-gray-50">
+      <Container class="mx-auto my-10 rounded border border-gray-200 bg-white p-8">
+        <Heading as="h1" class="text-2xl font-bold">
+          Order Confirmation
+        </Heading>
+        <Text class="text-gray-700">
+          Thank you for your order!
+        </Text>
+      </Container>
+    </Body>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Section
+
+A semantic section wrapper for grouping related content. Uses table-based layout for compatibility.
+
+### Props
+
+<ParamField path="children" type="snippet" required>
+  Section content
+</ParamField>
+
+All standard HTML table attributes are supported via `HTMLTableAttributes`.
+
+### Usage
+
+```svelte
+<Section class="mb-8">
+  <Text>Section content</Text>
+</Section>
+```
+
+<Tabs>
+  <Tab title="Basic">
+    ```svelte
+    <Container>
+      <Section>
+        <Heading>Feature Update</Heading>
+        <Text>We've added new features</Text>
+      </Section>
+      
+      <Section>
+        <Heading>Bug Fixes</Heading>
+        <Text>Several bugs were fixed</Text>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+  
+  <Tab title="With Styling">
+    ```svelte
+    <Container>
+      <Section class="rounded bg-blue-50 p-5">
+        <Heading>Important Notice</Heading>
+        <Text>This section stands out with a background</Text>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+  
+  <Tab title="Spaced Sections">
+    ```svelte
+    <Container>
+      <Section class="mb-6">
+        <Text>First section</Text>
+      </Section>
+      
+      <Section class="mb-6">
+        <Text>Second section</Text>
+      </Section>
+      
+      <Section>
+        <Text>Third section</Text>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Row
+
+Creates a horizontal row for multi-column layouts. Must contain Column components as children.
+
+### Props
+
+<ParamField path="children" type="snippet" required>
+  Column components
+</ParamField>
+
+All standard HTML table attributes are supported via `HTMLTableAttributes`.
+
+### Usage
+
+```svelte
+<Row>
+  <Column>
+    <Text>Left column</Text>
+  </Column>
+  <Column>
+    <Text>Right column</Text>
+  </Column>
+</Row>
+```
+
+<Tabs>
+  <Tab title="Two Columns">
+    ```svelte
+    <Section>
+      <Row>
+        <Column>
+          <Img src="/product.jpg" width="200" height="200" alt="Product" />
+        </Column>
+        <Column class="pl-5">
+          <Heading as="h3">Product Name</Heading>
+          <Text>Product description goes here</Text>
+        </Column>
+      </Row>
+    </Section>
+    ```
+  </Tab>
+  
+  <Tab title="Three Columns">
+    ```svelte
+    <Section>
+      <Row>
+        <Column align="center">
+          <Text>Column 1</Text>
+        </Column>
+        <Column align="center">
+          <Text>Column 2</Text>
+        </Column>
+        <Column align="center">
+          <Text>Column 3</Text>
+        </Column>
+      </Row>
+    </Section>
+    ```
+  </Tab>
+  
+  <Tab title="Profile Layout">
+    ```svelte
+    <Section>
+      <Row>
+        <Column align="right" style="width: 64px;">
+          <Img 
+            src="/avatar.jpg" 
+            width="64" 
+            height="64" 
+            alt="Avatar"
+            class="rounded-full"
+          />
+        </Column>
+        <Column align="center" style="width: 20px;">
+          <Img src="/arrow.png" width="12" height="9" alt="Arrow" />
+        </Column>
+        <Column align="left" style="width: 64px;">
+          <Img 
+            src="/team.jpg" 
+            width="64" 
+            height="64" 
+            alt="Team"
+            class="rounded-full"
+          />
+        </Column>
+      </Row>
+    </Section>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Column
+
+A table cell (`<td>`) for use within Row components. Provides column-based layout.
+
+### Props
+
+<ParamField path="children" type="snippet">
+  Column content
+</ParamField>
+
+<ParamField path="align" type="'left' | 'center' | 'right'">
+  Horizontal alignment of content
+</ParamField>
+
+<ParamField path="colspan" type="number">
+  Number of columns to span
+</ParamField>
+
+All standard HTML td attributes are supported via `HTMLTdAttributes`.
+
+### Usage
+
+```svelte
+<Column align="center" style="width: 50%;">
+  <Text>Column content</Text>
+</Column>
+```
+
+<Tabs>
+  <Tab title="Equal Columns">
+    ```svelte
+    <Row>
+      <Column style="width: 50%;">
+        <Text>50% width</Text>
+      </Column>
+      <Column style="width: 50%;">
+        <Text>50% width</Text>
+      </Column>
+    </Row>
+    ```
+  </Tab>
+  
+  <Tab title="Unequal Columns">
+    ```svelte
+    <Row>
+      <Column style="width: 70%;">
+        <Text>Main content (70%)</Text>
+      </Column>
+      <Column style="width: 30%;" align="right">
+        <Text>Sidebar (30%)</Text>
+      </Column>
+    </Row>
+    ```
+  </Tab>
+  
+  <Tab title="Aligned Content">
+    ```svelte
+    <Row>
+      <Column align="left">
+        <Text>Left aligned</Text>
+      </Column>
+      <Column align="center">
+        <Text>Centered</Text>
+      </Column>
+      <Column align="right">
+        <Text>Right aligned</Text>
+      </Column>
+    </Row>
+    ```
+  </Tab>
+  
+  <Tab title="With Colspan">
+    ```svelte
+    <Section>
+      <Row>
+        <Column colspan={2}>
+          <Heading>Full Width Header</Heading>
+        </Column>
+      </Row>
+      <Row>
+        <Column>
+          <Text>Left content</Text>
+        </Column>
+        <Column>
+          <Text>Right content</Text>
+        </Column>
+      </Row>
+    </Section>
+    ```
+  </Tab>
+</Tabs>
+
+## Complete Layout Example
+
+Here's a complete example combining all layout components:
+
+```svelte
+<script lang="ts">
+  import {
+    Html,
+    Head,
+    Body,
+    Container,
+    Section,
+    Row,
+    Column,
+    Heading,
+    Text,
+    Img,
+    Button
+  } from 'better-svelte-email';
+</script>
+
+<Html>
+  <Head />
+  <Body class="bg-gray-100 font-sans">
+    <Container class="mx-auto my-10 rounded bg-white p-8">
+      <!-- Header Section -->
+      <Section class="mb-8">
+        <Row>
+          <Column>
+            <Img src="/logo.png" width="120" height="40" alt="Logo" />
+          </Column>
+          <Column align="right">
+            <Text class="text-gray-600">Order #12345</Text>
+          </Column>
+        </Row>
+      </Section>
+
+      <!-- Main Content Section -->
+      <Section class="mb-8">
+        <Heading as="h1" class="mb-4 text-2xl font-bold">
+          Order Confirmation
+        </Heading>
+        <Text class="text-gray-700">
+          Thank you for your order! Here are the details:
+        </Text>
+      </Section>
+
+      <!-- Product Row -->
+      <Section class="mb-8 rounded border border-gray-200 p-4">
+        <Row>
+          <Column style="width: 100px;">
+            <Img 
+              src="/product.jpg" 
+              width="100" 
+              height="100" 
+              alt="Product"
+              class="rounded"
+            />
+          </Column>
+          <Column class="pl-5">
+            <Heading as="h3" class="text-lg font-semibold">
+              Product Name
+            </Heading>
+            <Text class="text-gray-600">Quantity: 1</Text>
+          </Column>
+          <Column align="right" style="width: 80px;">
+            <Text class="font-bold">$99.99</Text>
+          </Column>
+        </Row>
+      </Section>
+
+      <!-- Action Section -->
+      <Section class="text-center">
+        <Button 
+          href="https://example.com/orders/12345"
+          class="rounded bg-blue-600 px-6 py-3 text-white"
+        >
+          View Order
+        </Button>
+      </Section>
+    </Container>
+  </Body>
+</Html>
+```
+
+## Best Practices
+
+<Tip>
+  Always use Container as the outermost layout component to ensure proper centering and max-width.
+</Tip>
+
+<Warning>
+  Columns must be direct children of Row components. Don't nest Rows directly without a Section or Container wrapper.
+</Warning>
+
+<Note>
+  For responsive layouts, consider using conditional widths or percentage-based widths on Column components.
+</Note>
+
+<Tip>
+  Use Section to logically group related content and add consistent spacing between groups.
+</Tip>

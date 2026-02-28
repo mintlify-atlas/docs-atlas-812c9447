@@ -1,0 +1,501 @@
+---
+title: Plain Text Rendering
+description: Generate accessible plain text versions of your HTML emails
+icon: file-lines
+---
+
+## Why Plain Text Matters
+
+Many email clients and users prefer plain text versions of emails for several reasons:
+
+- **Accessibility** - Screen readers often work better with plain text
+- **User Preference** - Some users disable HTML emails for security or simplicity
+- **Spam Filtering** - Emails with both HTML and plain text versions are less likely to be marked as spam
+- **Fallback** - When HTML rendering fails, the plain text version is displayed
+
+<Note>
+  Most email services (SendGrid, Postmark, AWS SES) allow you to send both HTML and plain text versions in a single email. The recipient's client chooses which to display.
+</Note>
+
+## Basic Usage
+
+Better Svelte Email provides a `toPlainText()` function that converts HTML to plain text:
+
+```typescript
+import Renderer, { toPlainText } from 'better-svelte-email/renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+
+// Render HTML version
+const html = await renderer.render(WelcomeEmail, {
+  props: { name: 'John' }
+});
+
+// Generate plain text version
+const plainText = toPlainText(html);
+```
+
+## How It Works
+
+The `toPlainText()` function uses the `html-to-text` library to intelligently convert HTML to readable plain text.
+
+From `src/lib/render/index.ts:257-263`:
+```typescript
+export const toPlainText = (markup: string) => {
+  return convert(markup, {
+    selectors: [
+      { selector: 'img', format: 'skip' },
+      { selector: '#__better-svelte-email-preview', format: 'skip' }
+    ]
+  });
+};
+```
+
+### What Gets Converted
+
+<AccordionGroup>
+  <Accordion title="Headings">
+    Headings are converted to uppercase text with spacing:
+    
+    ```html
+    <h1>Welcome</h1>
+    ```
+    
+    ```
+    WELCOME
+    ```
+  </Accordion>
+  
+  <Accordion title="Paragraphs">
+    Paragraphs are converted to text blocks with line breaks:
+    
+    ```html
+    <p>First paragraph.</p>
+    <p>Second paragraph.</p>
+    ```
+    
+    ```
+    First paragraph.
+    
+    Second paragraph.
+    ```
+  </Accordion>
+  
+  <Accordion title="Links">
+    Links are converted to text with URLs in brackets:
+    
+    ```html
+    <a href="https://example.com">Click here</a>
+    ```
+    
+    ```
+    Click here [https://example.com]
+    ```
+  </Accordion>
+  
+  <Accordion title="Lists">
+    Lists are converted to indented text with bullets or numbers:
+    
+    ```html
+    <ul>
+      <li>First item</li>
+      <li>Second item</li>
+    </ul>
+    ```
+    
+    ```
+     * First item
+     * Second item
+    ```
+  </Accordion>
+  
+  <Accordion title="Tables">
+    Tables are converted to text with column alignment preserved:
+    
+    ```html
+    <table>
+      <tr>
+        <td>Name</td>
+        <td>Value</td>
+      </tr>
+    </table>
+    ```
+    
+    ```
+    Name    Value
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### What Gets Removed
+
+- **Images** - Skipped entirely (no alt text or placeholder)
+- **Preview Text** - The hidden preview element is removed
+- **Styles** - All CSS styling is stripped
+- **Scripts** - Any JavaScript is removed
+
+## Complete Example
+
+<CodeGroup>
+```svelte email.svelte
+<script>
+  import { Html, Head, Body, Container, Heading, Text, Button, Link } from 'better-svelte-email';
+  
+  interface Props {
+    name: string;
+    resetUrl: string;
+  }
+  
+  let { name, resetUrl }: Props = $props();
+</script>
+
+<Html>
+  <Head />
+  <Body class="bg-gray-100 font-sans">
+    <Container class="bg-white p-8 rounded-lg">
+      <Heading as="h1">Password Reset Request</Heading>
+      
+      <Text>
+        Hi {name},
+      </Text>
+      
+      <Text>
+        We received a request to reset your password. Click the button below to create a new password:
+      </Text>
+      
+      <Button href={resetUrl} class="bg-blue-500 text-white">
+        Reset Password
+      </Button>
+      
+      <Text>
+        Or copy this link into your browser:
+      </Text>
+      
+      <Text>
+        <Link href={resetUrl}>{resetUrl}</Link>
+      </Text>
+      
+      <Text>
+        If you didn't request this, you can safely ignore this email.
+      </Text>
+    </Container>
+  </Body>
+</Html>
+```
+
+```typescript render.ts
+import Renderer, { toPlainText } from 'better-svelte-email/renderer';
+import PasswordResetEmail from '$lib/emails/password-reset.svelte';
+
+const renderer = new Renderer();
+
+const html = await renderer.render(PasswordResetEmail, {
+  props: {
+    name: 'John Doe',
+    resetUrl: 'https://example.com/reset?token=abc123'
+  }
+});
+
+const plainText = toPlainText(html);
+
+console.log(plainText);
+```
+
+```text Output
+PASSWORD RESET REQUEST
+
+Hi John Doe,
+
+We received a request to reset your password. Click the button below to create a new password:
+
+Reset Password [https://example.com/reset?token=abc123]
+
+Or copy this link into your browser:
+
+https://example.com/reset?token=abc123 [https://example.com/reset?token=abc123]
+
+If you didn't request this, you can safely ignore this email.
+```
+</CodeGroup>
+
+## Sending Both Versions
+
+### Nodemailer
+
+```typescript
+import nodemailer from 'nodemailer';
+import Renderer, { toPlainText } from 'better-svelte-email/renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(WelcomeEmail, { props: { name: 'John' } });
+const text = toPlainText(html);
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.example.com',
+  port: 587,
+  auth: { user: 'user', pass: 'pass' }
+});
+
+await transporter.sendMail({
+  from: 'noreply@example.com',
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  html,    // HTML version
+  text     // Plain text version
+});
+```
+
+### AWS SES
+
+```typescript
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import Renderer, { toPlainText } from 'better-svelte-email/renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(WelcomeEmail, { props: { name: 'John' } });
+const text = toPlainText(html);
+
+const ses = new SESClient({ region: 'us-east-1' });
+
+await ses.send(new SendEmailCommand({
+  Source: 'noreply@example.com',
+  Destination: { ToAddresses: ['user@example.com'] },
+  Message: {
+    Subject: { Data: 'Welcome!' },
+    Body: {
+      Html: { Data: html },
+      Text: { Data: text }
+    }
+  }
+}));
+```
+
+### Resend
+
+```typescript
+import { Resend } from 'resend';
+import Renderer, { toPlainText } from 'better-svelte-email/renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(WelcomeEmail, { props: { name: 'John' } });
+const text = toPlainText(html);
+
+const resend = new Resend('re_...');
+
+await resend.emails.send({
+  from: 'noreply@example.com',
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  html,
+  text
+});
+```
+
+### Postmark
+
+```typescript
+import { ServerClient } from 'postmark';
+import Renderer, { toPlainText } from 'better-svelte-email/renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(WelcomeEmail, { props: { name: 'John' } });
+const text = toPlainText(html);
+
+const client = new ServerClient('server-token');
+
+await client.sendEmail({
+  From: 'noreply@example.com',
+  To: 'user@example.com',
+  Subject: 'Welcome!',
+  HtmlBody: html,
+  TextBody: text
+});
+```
+
+## Best Practices
+
+### 1. Always Provide Plain Text
+
+<Tip>
+  Even if you think all your users have HTML-capable clients, always include a plain text version. It improves deliverability and ensures accessibility.
+</Tip>
+
+### 2. Test Plain Text Output
+
+Don't assume the conversion will be perfect. Always review the plain text output:
+
+```typescript
+const text = toPlainText(html);
+console.log(text);
+// Review the output for readability
+```
+
+### 3. Keep Structure Simple
+
+Complex layouts don't translate well to plain text:
+
+```svelte
+<!-- Bad: Complex multi-column layout -->
+<table>
+  <tr>
+    <td>Column 1</td>
+    <td>Column 2</td>
+    <td>Column 3</td>
+  </tr>
+</table>
+
+<!-- Good: Simple vertical layout -->
+<div>
+  <div>Section 1</div>
+  <div>Section 2</div>
+  <div>Section 3</div>
+</div>
+```
+
+### 4. Use Semantic HTML
+
+Proper HTML structure converts better to plain text:
+
+```svelte
+<!-- Good: Semantic structure -->
+<h1>Main Title</h1>
+<p>Paragraph content</p>
+<ul>
+  <li>List item</li>
+</ul>
+
+<!-- Bad: Div soup -->
+<div class="title">Main Title</div>
+<div class="text">Paragraph content</div>
+<div class="list">
+  <div class="item">List item</div>
+</div>
+```
+
+### 5. Include Link URLs
+
+Links should be clear in plain text:
+
+```svelte
+<!-- Good: Clear call-to-action -->
+<a href="https://example.com/reset">Reset your password</a>
+
+<!-- Bad: Vague link text -->
+<a href="https://example.com/reset">Click here</a>
+```
+
+### 6. Avoid Image-Only Content
+
+Images are skipped in plain text conversion:
+
+```svelte
+<!-- Bad: Important info in image only -->
+<img src="promo-code.png" alt="Use code SAVE20" />
+
+<!-- Good: Important info in text -->
+<p>Use code SAVE20 for 20% off</p>
+<img src="promo-code.png" alt="Promo code visual" />
+```
+
+## Custom Plain Text
+
+For complex emails, you might want to write custom plain text instead of relying on automatic conversion:
+
+```typescript
+import Renderer from 'better-svelte-email/renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(WelcomeEmail, { props: { name: 'John' } });
+
+// Custom plain text version
+const text = `
+Hi John,
+
+Welcome to our service!
+
+Get started: https://example.com/get-started
+
+Need help? Reply to this email.
+
+Thanks,
+The Team
+`.trim();
+
+// Send both versions
+await sendEmail({
+  html,
+  text
+});
+```
+
+<Warning>
+  When writing custom plain text, make sure it includes all the important information from the HTML version. Missing critical links or information can frustrate users.
+</Warning>
+
+## Troubleshooting
+
+### Links Not Showing URLs
+
+**Problem:** Link text appears but URLs are missing.
+
+**Cause:** This shouldn't happen with the default `toPlainText()` function.
+
+**Solution:** Verify you're using the latest version of Better Svelte Email.
+
+### Poor Formatting
+
+**Problem:** Plain text output is hard to read.
+
+**Cause:** Complex HTML structure doesn't convert well.
+
+**Solution:** Simplify your HTML structure or write custom plain text.
+
+### Images Showing Alt Text
+
+**Problem:** You want alt text in the plain text version.
+
+**Cause:** Images are skipped by default.
+
+**Solution:** Currently, images are completely skipped. If you need alt text, consider writing custom plain text or opening a feature request.
+
+## Testing Plain Text
+
+Test how your plain text version looks in different contexts:
+
+### Console Output
+
+```typescript
+const text = toPlainText(html);
+console.log('Plain text preview:');
+console.log(text);
+```
+
+### Save to File
+
+```typescript
+import { writeFileSync } from 'fs';
+
+const text = toPlainText(html);
+writeFileSync('email.txt', text);
+```
+
+### Send Test Email
+
+Send yourself test emails and view them in a plain text email client or toggle HTML off in your email client settings.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Rendering Process" icon="code" href="/core/rendering">
+    Learn how the HTML rendering works
+  </Card>
+  <Card title="Components" icon="puzzle-piece" href="/components/overview">
+    Explore available email components
+  </Card>
+</CardGroup>

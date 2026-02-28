@@ -1,0 +1,440 @@
+---
+title: Tailwind CSS Integration
+description: Understand how Tailwind CSS classes are converted to inline styles for email clients
+icon: palette
+---
+
+## Tailwind to Inline Styles
+
+Better Svelte Email automatically converts Tailwind CSS classes into inline styles that work across all email clients. This happens transparently during the rendering process.
+
+### Basic Example
+
+<CodeGroup>
+```svelte Input
+<div class="bg-blue-500 text-white p-4 rounded-lg">
+  Hello World
+</div>
+```
+
+```html Output
+<div style="background-color: rgb(59 130 246); color: rgb(255 255 255); padding: 16px; border-radius: 8px;">
+  Hello World
+</div>
+```
+</CodeGroup>
+
+### How It Works
+
+<Steps>
+  <Step title="Class Detection">
+    The renderer scans your component for all Tailwind classes.
+  </Step>
+  
+  <Step title="CSS Generation">
+    Tailwind CSS v4 generates only the CSS rules for classes you actually use.
+  </Step>
+  
+  <Step title="Style Classification">
+    Rules are classified as either inlinable or non-inlinable based on their properties.
+  </Step>
+  
+  <Step title="Inline Conversion">
+    Inlinable rules are converted to inline `style` attributes, while non-inlinable rules (media queries, pseudo-selectors) are placed in a `<style>` tag.
+  </Step>
+</Steps>
+
+## Responsive Breakpoints
+
+Better Svelte Email supports all Tailwind responsive breakpoints. These classes cannot be inlined and are added to the `<head>` as media queries.
+
+### Supported Breakpoints
+
+| Breakpoint | Min Width | Example |
+|------------|-----------|----------|
+| `sm:` | 640px | `sm:text-center` |
+| `md:` | 768px | `md:text-left` |
+| `lg:` | 1024px | `lg:px-8` |
+| `xl:` | 1280px | `xl:max-w-screen-xl` |
+| `2xl:` | 1536px | `2xl:text-4xl` |
+
+### Responsive Example
+
+<CodeGroup>
+```svelte Component
+<script>
+  import { Html, Head, Body } from 'better-svelte-email';
+</script>
+
+<Html>
+  <Head />
+  <Body>
+    <div class="text-center md:text-left lg:text-right">
+      Responsive Text
+    </div>
+  </Body>
+</Html>
+```
+
+```html Output
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <style>
+      @media (min-width: 768px) {
+        .md\\:text-left { text-align: left; }
+      }
+      @media (min-width: 1024px) {
+        .lg\\:text-right { text-align: right; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="md:text-left lg:text-right" style="text-align: center;">
+      Responsive Text
+    </div>
+  </body>
+</html>
+```
+</CodeGroup>
+
+<Warning>
+  Responsive classes require a `<head>` element to work properly. Without it, the media queries have nowhere to go and rendering will fail.
+  
+  Always use the `<Head>` component or a regular `<head>` tag when using responsive classes.
+</Warning>
+
+## Inlinable vs Non-Inlinable
+
+### Inlinable Styles
+
+These styles can be safely converted to inline `style` attributes:
+
+- Layout: `w-full`, `h-screen`, `p-4`, `m-2`
+- Typography: `text-lg`, `font-bold`, `text-center`
+- Colors: `bg-blue-500`, `text-white`, `border-gray-300`
+- Spacing: `mt-4`, `px-8`, `gap-2`
+- Borders: `border`, `rounded-lg`, `border-t-2`
+
+**Example:**
+```svelte
+<div class="bg-red-500 text-white font-bold p-4">
+  All classes here will be inlined
+</div>
+```
+
+### Non-Inlinable Styles
+
+These styles must remain in `<style>` tags:
+
+#### 1. Responsive Breakpoints
+
+```svelte
+<div class="sm:p-2 md:p-4 lg:p-6">
+  Padding changes at different screen sizes
+</div>
+```
+
+#### 2. Pseudo-Selectors
+
+```svelte
+<a class="hover:text-blue-600 hover:underline">
+  Link with hover effect
+</a>
+```
+
+#### 3. Pseudo-Elements
+
+```svelte
+<div class="before:content-['→'] after:content-['←']">
+  Content with pseudo-elements
+</div>
+```
+
+#### 4. State Variants
+
+```svelte
+<input class="focus:ring-2 disabled:opacity-50" />
+```
+
+From `src/lib/render/utils/css/is-rule-inlinable.ts:36-38`:
+```typescript
+// Check for pseudo selectors in the selector string
+// Matches :hover, ::before, :nth-child(), etc.
+const hasPseudoSelector = /::?[\w-]+(\([^)]*\))?/.test(rule.selector);
+```
+
+## Custom Tailwind Configuration
+
+Extend Tailwind's default theme to match your brand:
+
+```typescript
+import Renderer from 'better-svelte-email/renderer';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00',
+          accent: '#40B3FF'
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif']
+        },
+        spacing: {
+          '72': '18rem',
+          '84': '21rem'
+        }
+      }
+    }
+  }
+});
+```
+
+Now use your custom values:
+
+```svelte
+<div class="bg-brand text-accent font-sans p-72">
+  Custom themed content
+</div>
+```
+
+## Custom CSS Injection
+
+Inject custom CSS for app theme integration (perfect for shadcn-svelte themes):
+
+```typescript
+import appStyles from './app.css?raw';
+
+const renderer = new Renderer({
+  customCSS: appStyles
+});
+```
+
+### Example: CSS Variables
+
+<CodeGroup>
+```css app.css
+:root {
+  --brand-primary: #FF3E00;
+  --brand-secondary: #40B3FF;
+  --spacing-base: 8px;
+}
+
+.brand-button {
+  background: var(--brand-primary);
+  padding: calc(var(--spacing-base) * 2);
+}
+```
+
+```typescript renderer.ts
+import Renderer from 'better-svelte-email/renderer';
+import appStyles from './app.css?raw';
+
+const renderer = new Renderer({ customCSS: appStyles });
+```
+
+```svelte email.svelte
+<button class="brand-button text-white">
+  Click Me
+</button>
+```
+</CodeGroup>
+
+<Note>
+  Custom CSS is injected during Tailwind compilation, so CSS variables and custom classes are available for processing and can be resolved to inline styles.
+</Note>
+
+## Arbitrary Values
+
+Use arbitrary values for one-off customizations:
+
+### Colors
+
+```svelte
+<div class="bg-[#1da1f2] text-[rgb(220,38,38)]">
+  Twitter blue background
+</div>
+```
+
+### Sizes
+
+```svelte
+<div class="w-[350px] h-[calc(100vh-4rem)] p-[12px]">
+  Custom dimensions
+</div>
+```
+
+### Spacing
+
+```svelte
+<div class="mt-[17px] mb-[2.5rem]">
+  Precise spacing
+</div>
+```
+
+## CSS Variable Resolution
+
+Better Svelte Email automatically resolves CSS variables to their computed values for email client compatibility.
+
+### Before Resolution
+
+```css
+.button {
+  background: var(--brand-color);
+  padding: var(--spacing-md);
+}
+```
+
+### After Resolution
+
+```css
+.button {
+  background: #FF3E00;
+  padding: 16px;
+}
+```
+
+From `src/lib/render/utils/css/sanitize-stylesheet.ts:10-13`:
+```typescript
+export function sanitizeStyleSheet(root: Root, config?: SanitizeConfig) {
+  resolveAllCssVariables(root);
+  resolveCalcExpressions(root, config);
+  sanitizeDeclarations(root, config);
+}
+```
+
+## Calc() Expression Resolution
+
+Complex `calc()` expressions are resolved to absolute values:
+
+```svelte
+<!-- Input -->
+<div class="w-[calc(100%-20px)] p-[calc(1rem+5px)]">
+  Calculated values
+</div>
+
+<!-- Output (with baseFontSize: 16) -->
+<div style="width: calc(100% - 20px); padding: 21px;">
+  Calculated values
+</div>
+```
+
+<Tip>
+  Set `baseFontSize` in renderer options to control rem/em conversion:
+  
+  ```typescript
+  const renderer = new Renderer({ baseFontSize: 16 });
+  ```
+</Tip>
+
+## Email Client Compatibility
+
+### Fully Supported
+
+- Apple Mail (iOS, macOS)
+- Gmail (Web, iOS, Android)
+- Outlook (Web)
+- Hey
+- Superhuman
+
+### Partial Support
+
+- Outlook (Windows) - Limited media query support
+- Outlook (macOS) - Some CSS3 features unsupported
+
+### Not Supported
+
+- Complex pseudo-selectors (`:nth-child(2n+1)`)
+- CSS Grid in older clients
+- Advanced flexbox in Outlook Windows
+
+<Warning>
+  Always test your emails in multiple clients. Use tools like Litmus or Email on Acid for comprehensive testing.
+</Warning>
+
+## Best Practices
+
+### Use Mobile-First Approach
+
+```svelte
+<!-- Bad: Desktop-first -->
+<div class="text-lg md:text-base">
+  Text size decreases on mobile
+</div>
+
+<!-- Good: Mobile-first -->
+<div class="text-base md:text-lg">
+  Text size increases on desktop
+</div>
+```
+
+### Prefer Inline Styles for Critical Design
+
+```svelte
+<!-- Critical branding should not rely on media queries -->
+<button class="bg-brand text-white font-bold py-3 px-6 rounded">
+  Call to Action
+</button>
+```
+
+### Test Without Media Queries
+
+Your email should look good even if media queries are stripped:
+
+```svelte
+<!-- Looks good with or without responsive classes -->
+<div class="w-full max-w-[600px] p-6 md:p-8">
+  Content adapts gracefully
+</div>
+```
+
+## Troubleshooting
+
+### Classes Not Being Inlined
+
+**Problem:** Classes remain in the output instead of being inlined.
+
+**Cause:** Classes contain pseudo-selectors or media queries.
+
+**Solution:** Check if you're using responsive or state variants. These are intentionally kept in `<style>` tags.
+
+### Styles Not Applying
+
+**Problem:** Custom classes don't have any effect.
+
+**Cause:** Classes not recognized by Tailwind.
+
+**Solution:** Either add them to your `tailwindConfig` or inject them via `customCSS`.
+
+### Media Queries Not Working
+
+**Problem:** Responsive classes have no effect.
+
+**Cause:** Missing `<head>` element.
+
+**Solution:** Add `<Head />` component to your email:
+
+```svelte
+import { Html, Head, Body } from 'better-svelte-email';
+
+<Html>
+  <Head />
+  <Body>
+    <!-- Your content -->
+  </Body>
+</Html>
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Rendering Process" icon="code" href="/core/rendering">
+    Deep dive into the rendering pipeline
+  </Card>
+  <Card title="Plain Text" icon="file-lines" href="/core/plain-text">
+    Generate accessible plain text versions
+  </Card>
+</CardGroup>

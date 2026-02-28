@@ -1,0 +1,157 @@
+---
+title: 'emailList()'
+description: 'Get a list of all email component files in your project'
+---
+
+## Overview
+
+The `emailList()` function scans your project directory and returns a list of all Svelte email component files. Use this function in your SvelteKit load functions to populate the email preview interface.
+
+## Function Signature
+
+```typescript
+function emailList(options?: EmailListProps): PreviewData
+```
+
+### Parameters
+
+<ParamField path="options" type="EmailListProps" default="{}">
+  Optional configuration object
+  
+  <ParamField path="options.path" type="string" default="'/src/lib/emails'">
+    Relative path from root to your emails folder
+  </ParamField>
+  
+  <ParamField path="options.root" type="string" optional>
+    Absolute path to your project root. Auto-detected using `process.cwd()` if not provided
+  </ParamField>
+</ParamField>
+
+### Return Type
+
+<ResponseField name="PreviewData" type="object">
+  Object containing the list of email files and the path
+  
+  <ResponseField name="files" type="string[] | null">
+    Array of relative file paths to email components (without `.svelte` extension), or `null` if directory doesn't exist or is empty
+  </ResponseField>
+  
+  <ResponseField name="path" type="string | null">
+    The email directory path that was scanned
+  </ResponseField>
+</ResponseField>
+
+## Usage
+
+### Basic Example
+
+```typescript +page.server.ts
+import { emailList } from 'better-svelte-email/preview';
+
+export function load() {
+  const emails = emailList();
+  return { emails };
+}
+```
+
+### Custom Directory
+
+```typescript +page.server.ts
+import { emailList } from 'better-svelte-email/preview';
+
+export function load() {
+  const emails = emailList({
+    root: process.cwd(),
+    path: '/src/lib/emails'
+  });
+  return { emails };
+}
+```
+
+### Example Response
+
+```json
+{
+  "files": [
+    "welcome",
+    "password-reset",
+    "notifications/daily-digest"
+  ],
+  "path": "/src/lib/emails"
+}
+```
+
+<Note>
+  The function automatically handles nested directories and returns relative paths. File names are returned without the `.svelte` extension.
+</Note>
+
+## Behavior
+
+### Directory Not Found
+
+If the email directory doesn't exist, the function returns:
+
+```json
+{
+  "files": null,
+  "path": "/src/lib/emails"
+}
+```
+
+A warning is logged to the console:
+```
+Email directory not found: /absolute/path/to/emails
+```
+
+### Empty Directory
+
+If no `.svelte` files are found, the function returns:
+
+```json
+{
+  "files": null,
+  "path": "/src/lib/emails"
+}
+```
+
+### Root Path Detection
+
+If `root` is not provided, the function attempts to use `process.cwd()`. If this fails, an error is thrown:
+
+<Warning>
+  In some environments (like edge runtimes), `process.cwd()` may not be available. In these cases, you must explicitly pass the `root` parameter.
+</Warning>
+
+## Integration with EmailPreview Component
+
+This function is typically used together with the `EmailPreview` component:
+
+```typescript +page.server.ts
+import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+import { PRIVATE_RESEND_API_KEY } from '$env/static/private';
+
+export function load() {
+  const emails = emailList();
+  return { emails };
+}
+
+export const actions = {
+  ...createEmail(),
+  ...sendEmail({ resendApiKey: PRIVATE_RESEND_API_KEY })
+};
+```
+
+```svelte +page.svelte
+<script>
+  import { EmailPreview } from 'better-svelte-email/preview';
+  
+  export let data;
+</script>
+
+<EmailPreview {data} />
+```
+
+## Related Functions
+
+- [createEmail()](/api/create-email) - Render email components on demand
+- [sendEmail()](/api/send-email) - Send emails via the preview interface

@@ -1,0 +1,192 @@
+---
+title: 'createEmail()'
+description: 'SvelteKit form action to render email components on demand'
+---
+
+## Overview
+
+The `createEmail()` function returns a SvelteKit form action that renders email components to HTML. Use this with the `EmailPreview` component to preview your email templates in the browser.
+
+## Function Signature
+
+```typescript
+function createEmail(options?: CreateEmailOptions): {
+  'create-email': (event: RequestEvent) => Promise<CreateEmailResponse>
+}
+```
+
+### Parameters
+
+<ParamField path="options" type="CreateEmailOptions" default="{}">
+  Optional configuration object
+  
+  <ParamField path="options.renderer" type="Renderer" optional>
+    Custom renderer instance with your Tailwind config. If not provided, uses default renderer
+  </ParamField>
+</ParamField>
+
+### Return Type
+
+<ResponseField name="actions" type="object">
+  SvelteKit actions object to be exported from `+page.server.ts`
+  
+  <ResponseField name="'create-email'" type="FormAction">
+    Form action that handles email rendering requests
+    
+    **Success Response:**
+    <ResponseField name="body" type="string">
+      Formatted HTML of the rendered email
+    </ResponseField>
+    
+    <ResponseField name="source" type="string | null">
+      Source code of the Svelte component
+    </ResponseField>
+    
+    **Error Response:**
+    <ResponseField name="status" type="number">
+      HTTP status code (400 or 500)
+    </ResponseField>
+    
+    <ResponseField name="error" type="object">
+      Error details
+      <ResponseField name="message" type="string">
+        Error description
+      </ResponseField>
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+## Usage
+
+### Basic Example
+
+```typescript +page.server.ts
+import { createEmail } from 'better-svelte-email/preview';
+
+export const actions = createEmail();
+```
+
+### With Custom Renderer
+
+Use a custom renderer to apply your own Tailwind configuration:
+
+```typescript +page.server.ts
+import { createEmail } from 'better-svelte-email/preview';
+import Renderer from 'better-svelte-email/render';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00',
+          accent: '#40B3FF'
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif']
+        }
+      }
+    }
+  }
+});
+
+export const actions = createEmail({ renderer });
+```
+
+### Complete Setup with EmailPreview
+
+```typescript +page.server.ts
+import { emailList, createEmail, sendEmail } from 'better-svelte-email/preview';
+import { PRIVATE_RESEND_API_KEY } from '$env/static/private';
+import Renderer from 'better-svelte-email/render';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  }
+});
+
+export function load() {
+  const emails = emailList();
+  return { emails };
+}
+
+export const actions = {
+  ...createEmail({ renderer }),
+  ...sendEmail({ resendApiKey: PRIVATE_RESEND_API_KEY, renderer })
+};
+```
+
+```svelte +page.svelte
+<script>
+  import { EmailPreview } from 'better-svelte-email/preview';
+  
+  export let data;
+</script>
+
+<EmailPreview {data} />
+```
+
+<Note>
+  The `EmailPreview` component automatically calls the `create-email` action when you select an email template from the list.
+</Note>
+
+## How It Works
+
+1. The `EmailPreview` component submits a form with `file` and `path` parameters
+2. The `create-email` action receives the form data
+3. The email component is dynamically imported from your project
+4. The component is rendered to HTML using the provided renderer
+5. The HTML is formatted with Prettier for readability
+6. Both the rendered HTML and source code are returned to the client
+
+## Error Handling
+
+### Missing Parameters (400)
+
+If `file` or `path` parameters are missing from the form data:
+
+```json
+{
+  "status": 400,
+  "body": {
+    "error": "Missing file or path parameter"
+  }
+}
+```
+
+### Render Error (500)
+
+If the email component fails to import or render:
+
+```json
+{
+  "status": 500,
+  "error": {
+    "message": "Failed to import email component 'welcome.svelte'. Make sure the file exists and includes the <Head /> component."
+  }
+}
+```
+
+<Warning>
+  All email components must include the `<Head />` component from `better-svelte-email` to render properly. Missing this component will cause render errors.
+</Warning>
+
+## Performance Considerations
+
+- Email components are dynamically imported on each request
+- The renderer processes Tailwind CSS classes and inlines styles
+- Prettier formats the output HTML (adds ~50-100ms)
+- Consider caching rendered emails in production if performance is critical
+
+## Related Functions
+
+- [emailList()](/api/email-list) - Get list of available email components
+- [sendEmail()](/api/send-email) - Send rendered emails via Resend
+- [Renderer](/api/renderer) - Learn more about custom Tailwind configuration

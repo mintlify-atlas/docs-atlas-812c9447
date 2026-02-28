@@ -1,0 +1,327 @@
+---
+title: 'Style utilities'
+description: 'Helper functions for working with CSS styles in email components'
+---
+
+Better Svelte Email provides several utility functions to simplify working with inline styles in email templates.
+
+## Import
+
+```typescript
+import { 
+  styleToString, 
+  pxToPt, 
+  withMargin, 
+  combineStyles 
+} from 'better-svelte-email/utils';
+```
+
+## styleToString
+
+Converts a style object to a CSS string with proper formatting.
+
+### Signature
+
+```typescript
+function styleToString(
+  style: Record<string, string | number | undefined>
+): string
+```
+
+### Parameters
+
+<ParamField path="style" type="Record<string, string | number | undefined>" required>
+  Object containing CSS properties in camelCase or kebab-case format
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="string">
+  CSS string with semicolon-separated properties
+</ResponseField>
+
+### Behavior
+
+- Converts camelCase property names to kebab-case (e.g., `backgroundColor` → `background-color`)
+- Filters out `undefined`, `null`, and empty string values
+- Joins properties with semicolons
+
+### Example
+
+```typescript
+import { styleToString } from 'better-svelte-email/utils';
+
+const styles = {
+  backgroundColor: '#fff',
+  fontSize: '16px',
+  lineHeight: 1.5,
+  padding: undefined // This will be filtered out
+};
+
+const cssString = styleToString(styles);
+// Result: "background-color:#fff;font-size:16px;line-height:1.5"
+```
+
+## pxToPt
+
+Converts pixel values to point values for better email client compatibility.
+
+### Signature
+
+```typescript
+function pxToPt(px: string | number): string
+```
+
+### Parameters
+
+<ParamField path="px" type="string | number" required>
+  Pixel value as a number or string (e.g., `16` or `"16px"`)
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="string">
+  Point value as a string with "pt" suffix (e.g., "12pt")
+</ResponseField>
+
+### Conversion Formula
+
+The conversion uses the formula: **1px = 0.75pt** (rounded to nearest integer)
+
+### Example
+
+```typescript
+import { pxToPt } from 'better-svelte-email/utils';
+
+const fontSize = pxToPt(16);    // "12pt"
+const lineHeight = pxToPt("20"); // "15pt"
+const padding = pxToPt(24);      // "18pt"
+```
+
+<Note>
+  Points are often more reliable than pixels in older email clients like Outlook. This utility is used internally by the Button component for MSO-specific styles.
+</Note>
+
+## withMargin
+
+Converts margin shorthand props to a style object with pixel values. This is commonly used in email components that accept margin props.
+
+### Signature
+
+```typescript
+type Margin = {
+  m?: string;   // All sides
+  mx?: string;  // Horizontal (left + right)
+  my?: string;  // Vertical (top + bottom)
+  mt?: string;  // Top
+  mr?: string;  // Right
+  mb?: string;  // Bottom
+  ml?: string;  // Left
+};
+
+function withMargin(props: Margin): Record<string, string>
+```
+
+### Parameters
+
+<ParamField path="props" type="Margin" required>
+  Object with margin shorthand properties
+  
+  <Expandable title="Margin properties">
+    <ParamField path="m" type="string">
+      Margin for all sides (e.g., "16")
+    </ParamField>
+    <ParamField path="mx" type="string">
+      Horizontal margin (left and right)
+    </ParamField>
+    <ParamField path="my" type="string">
+      Vertical margin (top and bottom)
+    </ParamField>
+    <ParamField path="mt" type="string">
+      Top margin
+    </ParamField>
+    <ParamField path="mr" type="string">
+      Right margin
+    </ParamField>
+    <ParamField path="mb" type="string">
+      Bottom margin
+    </ParamField>
+    <ParamField path="ml" type="string">
+      Left margin
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="Record<string, string>">
+  Style object with margin properties in pixels (e.g., `{ marginTop: "16px" }`)
+</ResponseField>
+
+### Priority Order
+
+More specific props override less specific ones:
+1. Individual sides (`mt`, `mr`, `mb`, `ml`) have highest priority
+2. Directional shorthands (`mx`, `my`) override `m`
+3. Global `m` has lowest priority
+
+### Example
+
+```typescript
+import { withMargin } from 'better-svelte-email/utils';
+
+// Simple margin on all sides
+const margin1 = withMargin({ m: "16" });
+// Result: { margin: "16px" }
+
+// Horizontal and vertical margins
+const margin2 = withMargin({ mx: "20", my: "10" });
+// Result: { marginLeft: "20px", marginRight: "20px", marginTop: "10px", marginBottom: "10px" }
+
+// Mixed with override
+const margin3 = withMargin({ m: "16", mt: "24" });
+// Result: { margin: "16px", marginTop: "24px" }
+
+// Individual sides
+const margin4 = withMargin({ mt: "8", mr: "16", mb: "8", ml: "16" });
+// Result: { marginTop: "8px", marginRight: "16px", marginBottom: "8px", marginLeft: "16px" }
+```
+
+## combineStyles
+
+Merges multiple CSS style strings into a single string, handling duplicates and formatting.
+
+### Signature
+
+```typescript
+function combineStyles(...styles: (string | undefined | null)[]): string
+```
+
+### Parameters
+
+<ParamField path="styles" type="(string | undefined | null)[]" required>
+  Variable number of CSS style strings to combine. `undefined` and `null` values are filtered out.
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="string">
+  Combined CSS string with semicolon-separated properties
+</ResponseField>
+
+### Behavior
+
+- Filters out falsy values (`undefined`, `null`, empty strings)
+- Splits each style string by semicolons
+- Trims whitespace from each declaration
+- Flattens and joins all declarations
+- Later declarations override earlier ones (if properties conflict)
+
+### Example
+
+```typescript
+import { combineStyles } from 'better-svelte-email/utils';
+
+const baseStyle = "color: #333; font-size: 14px";
+const hoverStyle = "color: #000";
+const additionalStyle = undefined; // Will be filtered out
+
+const combined = combineStyles(baseStyle, hoverStyle, additionalStyle);
+// Result: "color:#333;font-size:14px;color:#000"
+```
+
+<Note>
+  This utility is commonly used in components to merge default styles with user-provided styles. The Renderer will handle conflicting properties during the inlining process.
+</Note>
+
+## Complete Example
+
+Here's how these utilities work together in a custom email component:
+
+```svelte title="CustomCard.svelte"
+<script lang="ts">
+  import { styleToString, pxToPt, withMargin, combineStyles } from 'better-svelte-email/utils';
+  import type { HTMLAttributes } from 'svelte/elements';
+
+  type Props = {
+    m?: string;
+    mx?: string;
+    my?: string;
+    mt?: string;
+    mr?: string;
+    mb?: string;
+    ml?: string;
+    style?: string;
+    children?: any;
+  } & HTMLAttributes<HTMLDivElement>;
+
+  let { 
+    m, mx, my, mt, mr, mb, ml,
+    style,
+    children,
+    ...restProps 
+  }: Props = $props();
+
+  // Generate margin styles from props
+  const marginStyles = withMargin({ m, mx, my, mt, mr, mb, ml });
+
+  // Base card styles
+  const baseStyles = styleToString({
+    backgroundColor: '#ffffff',
+    borderRadius: '8px',
+    padding: '24px',
+    fontSize: '16px',
+    lineHeight: 1.5
+  });
+
+  // MSO-specific styles using points
+  const msoFontSize = pxToPt(16); // "12pt"
+
+  // Combine all styles
+  const finalStyles = combineStyles(
+    baseStyles,
+    styleToString(marginStyles),
+    style
+  );
+</script>
+
+<div {...restProps} style={finalStyles}>
+  <!--[if mso]>
+  <div style="font-size: {msoFontSize}">
+  <![endif]-->
+  
+  {@render children?.()}
+  
+  <!--[if mso]>
+  </div>
+  <![endif]-->
+</div>
+```
+
+Usage:
+
+```svelte title="welcome-email.svelte"
+<script>
+  import CustomCard from './CustomCard.svelte';
+</script>
+
+<CustomCard 
+  mt="32" 
+  mx="16" 
+  style="border: 1px solid #e5e7eb"
+>
+  <h2>Welcome!</h2>
+  <p>This card uses all the style utilities.</p>
+</CustomCard>
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Renderer API" icon="code" href="/api/renderer">
+    Learn about the Renderer class
+  </Card>
+  <Card title="Components" icon="grid" href="/components/overview">
+    Explore built-in email components
+  </Card>
+</CardGroup>

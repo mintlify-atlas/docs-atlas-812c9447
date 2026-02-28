@@ -1,80 +1,385 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Build your first email with Better Svelte Email in under 5 minutes"
 ---
 
-## Get started in three steps
+## Overview
 
-Get your documentation site running locally and make your first customization.
+This guide will walk you through creating, rendering, and sending your first email with Better Svelte Email. By the end, you'll have a working welcome email that looks great across all email clients.
 
-### Step 1: Set up your local environment
+<Steps>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Step title="Create Your First Email Component">
 
-### Step 2: Deploy your changes
+Create a new file for your welcome email component. We'll use Tailwind CSS for styling, but bare CSS works too.
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+```svelte filename="src/lib/emails/welcome.svelte"
+<script>
+  import {
+    Html,
+    Head,
+    Body,
+    Preview,
+    Container,
+    Section,
+    Text,
+    Button,
+    Row
+  } from 'better-svelte-email';
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+  let { name = 'there' } = $props();
+</script>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Html>
+  <Head />
+  <Body class="bg-zinc-100">
+    <Preview preview="Welcome to our platform!" />
+    <Container class="m-8 mx-auto max-w-lg rounded-2xl bg-white p-8">
+      <Section class="mx-auto text-center">
+        <Text class="text-2xl font-bold text-zinc-900">
+          Welcome {name}!
+        </Text>
+        <Text class="mt-3 text-zinc-600">
+          Better Svelte Email converts Svelte components into email-safe HTML
+          with full Tailwind support.
+        </Text>
+        <Row class="mt-6">
+          <Button
+            href="https://better-svelte-email.konixy.fr/docs"
+            pX={24}
+            pY={14}
+            class="mr-2 rounded-lg bg-orange-600 text-white"
+          >
+            Explore the docs
+          </Button>
+          <Button
+            href="https://github.com/Konixy/better-svelte-email"
+            pX={24}
+            pY={14}
+            class="ml-2 rounded-lg border border-zinc-200 text-zinc-900"
+          >
+            View on GitHub
+          </Button>
+        </Row>
+      </Section>
+    </Container>
+  </Body>
+</Html>
+```
 
-### Step 3: Go live
+<Tip>
+  The `Preview` component sets the text shown in inbox previews before the email is opened.
+</Tip>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+</Step>
 
-## Next steps
+<Step title="Render the Email to HTML">
 
-Now that you have your docs running, explore these key features:
+Use the `Renderer` class to convert your Svelte component into email-safe HTML.
 
-<CardGroup cols={2}>
+```typescript filename="src/lib/render-email.ts"
+import Renderer from 'better-svelte-email/render';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+const renderer = new Renderer();
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+const html = await renderer.render(WelcomeEmail, {
+  props: { name: 'John' }
+});
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+console.log(html);
+```
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+The rendered HTML will have:
+- Tailwind classes converted to inline styles
+- Media queries injected into `<head>` for responsive design
+- Email-safe DOCTYPE and structure
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  The `Renderer` class processes Tailwind utilities and outputs production-ready HTML that works across all major email clients.
+</Note>
+
+</Step>
+
+<Step title="Send the Email">
+
+Integrate with your email service provider to send the rendered HTML. This example uses [Resend](https://resend.com), but you can use any provider.
+
+### Using SvelteKit API Route
+
+```typescript filename="src/routes/api/send-email/+server.ts"
+import Renderer from 'better-svelte-email/render';
+import { Resend } from 'resend';
+import { env } from '$env/dynamic/private';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const resend = new Resend(env.PRIVATE_RESEND_API_KEY);
+
+export async function POST({ request }) {
+  const { name, email } = await request.json();
+
+  const html = await renderer.render(WelcomeEmail, {
+    props: { name }
+  });
+
+  const { data, error } = await resend.emails.send({
+    from: 'onboarding@yourdomain.com',
+    to: email,
+    subject: 'Welcome to our platform!',
+    html
+  });
+
+  if (error) {
+    return new Response(JSON.stringify({ error }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  return new Response(JSON.stringify({ success: true, data }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+```
+
+### Using Other Email Providers
+
+Better Svelte Email works with any email provider. Just pass the rendered HTML to their API:
+
+<CodeGroup>
+
+```typescript Resend
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+await resend.emails.send({
+  from: 'noreply@yourdomain.com',
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  html
+});
+```
+
+```typescript SendGrid
+import sgMail from '@sendgrid/mail';
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+await sgMail.send({
+  from: 'noreply@yourdomain.com',
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  html
+});
+```
+
+```typescript Nodemailer
+import nodemailer from 'nodemailer';
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.example.com',
+  port: 587,
+  auth: {
+    user: 'your-email@example.com',
+    pass: 'your-password'
+  }
+});
+
+await transporter.sendMail({
+  from: 'noreply@yourdomain.com',
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  html
+});
+```
+
+</CodeGroup>
+
+</Step>
+
+<Step title="Add Plain Text Version (Optional)">
+
+For better deliverability and accessibility, include a plain text version of your email.
+
+```typescript filename="src/routes/api/send-email/+server.ts"
+import Renderer, { toPlainText } from 'better-svelte-email/render';
+import { Resend } from 'resend';
+import { env } from '$env/dynamic/private';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const resend = new Resend(env.PRIVATE_RESEND_API_KEY);
+
+export async function POST({ request }) {
+  const { name, email } = await request.json();
+
+  const html = await renderer.render(WelcomeEmail, {
+    props: { name }
+  });
+
+  // Generate plain text version
+  const plainText = toPlainText(html);
+
+  await resend.emails.send({
+    from: 'onboarding@yourdomain.com',
+    to: email,
+    subject: 'Welcome to our platform!',
+    html,
+    text: plainText  // Add plain text version
+  });
+
+  return new Response('Email sent');
+}
+```
+
+The `toPlainText` function automatically strips images and preview text, leaving readable content.
+
+</Step>
+
+</Steps>
+
+## Advanced Configuration
+
+### Custom Tailwind Configuration
+
+Extend the default Tailwind theme with your brand colors and custom configuration:
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer({
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00',
+          'brand-dark': '#E03000'
+        },
+        fontFamily: {
+          sans: ['Inter', 'sans-serif']
+        }
+      }
+    }
+  }
+});
+
+const html = await renderer.render(WelcomeEmail, {
+  props: { name: 'John' }
+});
+```
+
+Now you can use `text-brand` and other custom classes in your email components.
+
+### Inject App Theme Styles
+
+Share CSS variables and theme styles between your app and emails:
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import layoutStyles from '$lib/styles/app.css?raw';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer({
+  customCSS: layoutStyles  // Inject your app's CSS
+});
+
+const html = await renderer.render(WelcomeEmail, {
+  props: { name: 'John' }
+});
+```
+
+This is especially useful for integrating with component libraries like shadcn-svelte.
+
+<Tip>
+  Learn more about custom Tailwind configuration in the [Custom Tailwind Config guide](/guides/custom-tailwind-config).
+</Tip>
+
+## Test Your Email
+
+### Visual Preview in Development
+
+Better Svelte Email provides a built-in preview component for development:
+
+```svelte filename="src/routes/preview/+page.svelte"
+<script>
+  import EmailPreview from 'better-svelte-email/preview/EmailPreview.svelte';
+  import WelcomeEmail from '$lib/emails/welcome.svelte';
+</script>
+
+<EmailPreview component={WelcomeEmail} props={{ name: 'John' }} />
+```
+
+Navigate to `/preview` in your browser to see a live preview with:
+- Desktop and mobile views
+- Component tree inspector
+- HTML and plain text output
+- Send test email functionality
+
+<Card title="Email Preview Guide" icon="eye" href="/guides/email-preview">
+  Set up the complete email preview environment.
+</Card>
+
+### Send Test Emails
+
+Send test emails to yourself before production:
+
+```typescript filename="src/routes/api/send-test/+server.ts"
+import Renderer from 'better-svelte-email/render';
+import { Resend } from 'resend';
+import { env } from '$env/dynamic/private';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const resend = new Resend(env.PRIVATE_RESEND_API_KEY);
+
+export async function POST() {
+  const html = await renderer.render(WelcomeEmail, {
+    props: { name: 'Test User' }
+  });
+
+  await resend.emails.send({
+    from: 'onboarding@yourdomain.com',
+    to: 'your-email@example.com',  // Your email for testing
+    subject: '[TEST] Welcome Email',
+    html
+  });
+
+  return new Response('Test email sent');
+}
+```
+
+## What's Next?
+
+You've successfully created, rendered, and sent your first email! Here's what to explore next:
+
+<CardGroup cols={2}>
+  <Card title="Component Library" icon="cube" href="/components/overview">
+    Explore all available components and their props.
+  </Card>
+  <Card title="Rendering Guide" icon="gear" href="/core/rendering">
+    Deep dive into the Renderer API and options.
+  </Card>
+  <Card title="Tailwind Support" icon="paintbrush" href="/core/tailwind-support">
+    Learn about responsive design and custom classes.
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/guides/sending-emails">
+    Best practices for sending emails in production.
+  </Card>
+</CardGroup>
+
+## Example Templates
+
+Need inspiration? Check out these example templates:
+
+- **Vercel Invite Email**: Team invitation with profile images
+- **Apple Receipt**: Transaction receipt with product details
+- **Demo Email**: Feature showcase with icons and CTAs
+
+All examples are available in the [GitHub repository](https://github.com/Konixy/better-svelte-email/tree/main/src/lib/emails/examples).
+
+<Note>
+  Have questions? Check out the [GitHub discussions](https://github.com/Konixy/better-svelte-email/discussions) or open an issue.
 </Note>

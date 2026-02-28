@@ -1,0 +1,356 @@
+---
+title: 'Migrating to v1'
+description: 'Guide for migrating from Better Svelte Email v0.x to v1.x'
+---
+
+This guide will help you migrate your Better Svelte Email implementation from v0.x to v1.x. Version 1 introduces significant improvements including a new rendering architecture, Tailwind CSS v4 support, and enhanced component APIs.
+
+## Overview of Changes
+
+Version 1 includes several breaking changes:
+
+- **New Renderer class** replaces the preprocessor approach
+- **Tailwind CSS v4** support (with backward compatibility for v3)
+- **Route-based email preview** system
+- **Enhanced class and style props** on components
+- **Updated plain text rendering** API
+
+<Steps>
+
+### Step 1: Update Dependencies
+
+First, update Better Svelte Email to the latest version:
+
+```bash
+npm install better-svelte-email@latest
+```
+
+If you're using Tailwind CSS, update it as well:
+
+```bash
+npm install tailwindcss@latest
+```
+
+### Step 2: Remove the Preprocessor
+
+<Warning>
+The `betterSvelteEmailPreprocessor` is deprecated in v1 and must be removed from your configuration.
+</Warning>
+
+Remove the preprocessor from your `svelte.config.js`:
+
+<CodeGroup>
+
+```javascript Before (v0.x)
+import adapter from '@sveltejs/adapter-auto';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { betterSvelteEmailPreprocessor } from 'better-svelte-email';
+
+const config = {
+  preprocess: [vitePreprocess(), betterSvelteEmailPreprocessor()],
+  kit: {
+    adapter: adapter()
+  }
+};
+
+export default config;
+```
+
+```javascript After (v1.x)
+import adapter from '@sveltejs/adapter-auto';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+const config = {
+  preprocess: vitePreprocess(),
+  kit: {
+    adapter: adapter()
+  }
+};
+
+export default config;
+```
+
+</CodeGroup>
+
+### Step 3: Migrate to the Renderer Class
+
+<Warning>
+The `render` function from `svelte/server` is no longer used. You must use the new `Renderer` class instead.
+</Warning>
+
+Replace your rendering code with the new `Renderer` class:
+
+<CodeGroup>
+
+```typescript Before (v0.x)
+import { render } from 'svelte/server';
+import EmailTemplate from './EmailTemplate.svelte';
+
+const { html, head } = render(EmailTemplate, {
+  props: { name: 'John' }
+});
+```
+
+```typescript After (v1.x)
+import Renderer from 'better-svelte-email/render';
+import EmailTemplate from './EmailTemplate.svelte';
+
+const { renderer } = new Renderer();
+
+const html = await renderer(EmailTemplate, {
+  props: { name: 'John' }
+});
+```
+
+</CodeGroup>
+
+### Step 4: Update Tailwind Configuration
+
+The way you pass Tailwind configuration has changed to support both v3 and v4.
+
+#### For Tailwind CSS v3
+
+Pass your Tailwind config object to the `Renderer` constructor:
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import tailwindConfig from './tailwind.config.js';
+
+const renderer = new Renderer({ tailwindConfig });
+
+const html = await renderer(EmailTemplate, {
+  props: { name: 'John' }
+});
+```
+
+#### For Tailwind CSS v4
+
+<Note>
+Tailwind v4 support was added in v1.2.
+</Note>
+
+Pass your main CSS file (where your Tailwind config lives) using the `customCSS` option:
+
+```typescript
+import Renderer from 'better-svelte-email/render';
+import appStyles from 'src/routes/layout.css?raw';
+
+const renderer = new Renderer({ customCSS: appStyles });
+
+const html = await renderer(EmailTemplate, {
+  props: { name: 'John' }
+});
+```
+
+Better Svelte Email will automatically inject the Tailwind config into the email rendering process, allowing you to use the same configuration in both your app and emails.
+
+### Step 5: Update Tailwind Classes
+
+If you're upgrading to Tailwind CSS v4, you'll need to update your class names to match the new syntax. Refer to the [Tailwind CSS v4 upgrade guide](https://tailwindcss.com/docs/upgrade-guide) for detailed migration instructions.
+
+### Step 6: Use Inline Classes and Styles
+
+Version 1 adds support for dynamic `class` and `style` props on all components:
+
+<CodeGroup>
+
+```svelte Before (v0.x)
+<script>
+  import { Text, Heading } from 'better-svelte-email/components';
+  
+  let textColor = 'text-blue-600';
+  let headingClass = 'font-bold';
+</script>
+
+<!-- Classes had to be applied differently -->
+<Text>
+  <span class="text-sm {textColor}">Hello</span>
+</Text>
+<Heading as="h1">
+  <span class={headingClass}>World</span>
+</Heading>
+```
+
+```svelte After (v1.x)
+<script>
+  import { Text, Heading } from 'better-svelte-email/components';
+  
+  let textColor = 'text-blue-600';
+  let headingClass = 'font-bold';
+</script>
+
+<!-- Now you can use class and style props directly -->
+<Text class="text-sm {textColor}">Hello</Text>
+<Heading as="h1" class={headingClass}>World</Heading>
+
+<!-- This also works with the style prop -->
+<Text style="color: red; font-size: 14px;">Styled text</Text>
+```
+
+</CodeGroup>
+
+### Step 7: Update Plain Text Rendering
+
+<Warning>
+The `renderAsPlainText` function has been deprecated.
+</Warning>
+
+Use the new `toPlainText` function instead:
+
+<CodeGroup>
+
+```typescript Before (v0.x)
+import { renderAsPlainText } from 'better-svelte-email';
+
+const plainText = renderAsPlainText(html);
+```
+
+```typescript After (v1.x)
+import { toPlainText } from 'better-svelte-email/render';
+
+const plainText = toPlainText(html);
+```
+
+</CodeGroup>
+
+### Step 8: Migrate Email Preview
+
+The email preview system now uses a route-based approach with catch-all routes.
+
+#### Update Directory Structure
+
+Move your preview files to a new catch-all route directory:
+
+```
+Before (v0.x)
+src/routes/email-preview/
+├── +page.svelte
+└── +page.server.ts
+
+After (v1.x)
+src/routes/email-preview/[...email]/
+├── +page.svelte
+└── +page.server.ts
+```
+
+#### Update Server Actions
+
+<Warning>
+The `createEmail` function now needs to be called like `sendEmail`.
+</Warning>
+
+Update your `+page.server.ts` file:
+
+<CodeGroup>
+
+```typescript Before (v0.x)
+// src/routes/email-preview/+page.server.ts
+import { createEmail, sendEmail } from 'better-svelte-email/preview';
+
+export const actions = {
+  ...createEmail,
+  ...sendEmail()
+};
+```
+
+```typescript After (v1.x)
+// src/routes/email-preview/[...email]/+page.server.ts
+import { createEmail, sendEmail } from 'better-svelte-email/preview';
+
+export const actions = {
+  ...createEmail(),
+  ...sendEmail()
+};
+```
+
+</CodeGroup>
+
+#### Update Preview Component
+
+Update your `+page.svelte` file to use the new API:
+
+<CodeGroup>
+
+```svelte Before (v0.x)
+<!-- src/routes/email-preview/+page.svelte -->
+<script lang="ts">
+  import { EmailPreview } from 'better-svelte-email/preview';
+  import { page } from '$app/stores';
+</script>
+
+<EmailPreview {page} />
+```
+
+```svelte After (v1.x)
+<!-- src/routes/email-preview/[...email]/+page.svelte -->
+<script lang="ts">
+  import { EmailPreview } from 'better-svelte-email/preview';
+  import { page } from '$app/state';
+</script>
+
+<EmailPreview {page} />
+```
+
+</CodeGroup>
+
+Note the change from `$app/stores` to `$app/state`.
+
+#### Using Custom Tailwind Config with Preview
+
+If you need to use a custom Tailwind configuration with the preview system, pass a `Renderer` instance to both `createEmail` and `sendEmail`:
+
+```typescript
+// src/routes/email-preview/[...email]/+page.server.ts
+import { createEmail, sendEmail } from 'better-svelte-email/preview';
+import Renderer from 'better-svelte-email/render';
+import tailwindConfig from '$lib/tailwind.config.js';
+import appStyles from 'src/routes/layout.css?raw';
+
+// For Tailwind v3
+const renderer = new Renderer({ tailwindConfig });
+
+// For Tailwind v4
+// const renderer = new Renderer({ customCSS: appStyles });
+
+export const actions = {
+  ...createEmail({ renderer }),
+  ...sendEmail({ renderer })
+};
+```
+
+</Steps>
+
+## Migration Checklist
+
+Use this checklist to ensure you've completed all migration steps:
+
+- [ ] Updated `better-svelte-email` to latest version
+- [ ] Updated `tailwindcss` to latest version (if using)
+- [ ] Removed `betterSvelteEmailPreprocessor` from `svelte.config.js`
+- [ ] Replaced `render` from `svelte/server` with `Renderer` class
+- [ ] Updated Tailwind configuration (v3 or v4)
+- [ ] Updated Tailwind class names (if migrating to v4)
+- [ ] Migrated to `toPlainText` function
+- [ ] Moved email preview to `[...email]` catch-all route
+- [ ] Updated `createEmail` to be called as a function
+- [ ] Updated `page` import from `$app/stores` to `$app/state`
+- [ ] Tested all email templates render correctly
+
+## Getting Help
+
+If you encounter issues during migration:
+
+- Check the [GitHub Issues](https://github.com/afreidz/better-svelte-email/issues)
+- Review the [full documentation](/essentials/overview)
+- Join the community discussions
+
+## What's New in v1
+
+Beyond the breaking changes, v1 introduces many improvements:
+
+- Better performance with the new rendering architecture
+- Improved TypeScript support
+- Enhanced component APIs with `class` and `style` props
+- Route-based preview system for better developer experience
+- Support for both Tailwind CSS v3 and v4
+- More consistent API design across the library

@@ -1,0 +1,252 @@
+---
+title: RenderOptions
+description: Options for rendering a Svelte component to email HTML
+---
+
+## Overview
+
+`RenderOptions` is a configuration object passed to the `Renderer.render()` method to control how a specific Svelte component is rendered.
+
+## Type Definition
+
+```ts
+export type RenderOptions = {
+  props?: Omit<Record<string, any>, '$$slots' | '$$events'> | undefined;
+  context?: Map<any, any>;
+  idPrefix?: string;
+};
+```
+
+## Properties
+
+<ParamField path="props" type="Omit<Record<string, any>, '$$slots' | '$$events'>">
+  Props to pass to the Svelte component being rendered.
+  
+  This object contains the data your component needs. The keys should match the prop names defined in your Svelte component's `<script>` tag.
+  
+  **Note:** The special Svelte properties `$$slots` and `$$events` are excluded from the type since they're not applicable in SSR contexts.
+  
+  **Example:**
+  ```ts
+  {
+    username: 'john_doe',
+    resetUrl: 'https://example.com/reset?token=abc123',
+    expiresIn: '24 hours'
+  }
+  ```
+</ParamField>
+
+<ParamField path="context" type="Map<any, any>">
+  Context map for Svelte's context API (`getContext`/`setContext`).
+  
+  This allows you to provide context values that child components can access using Svelte's `getContext()` function. Useful for dependency injection patterns.
+  
+  **Example:**
+  ```ts
+  const context = new Map();
+  context.set('theme', { primaryColor: '#FF3E00' });
+  context.set('locale', 'en-US');
+  
+  await renderer.render(EmailComponent, { context });
+  ```
+</ParamField>
+
+<ParamField path="idPrefix" type="string">
+  Prefix for component-generated IDs to avoid collisions.
+  
+  If your Svelte component generates IDs (for `<label>` elements, ARIA attributes, etc.), this prefix ensures they don't collide when rendering multiple emails or components.
+  
+  **Example:**
+  ```ts
+  await renderer.render(EmailComponent, {
+    idPrefix: 'email-1-'
+  });
+  // Generated IDs will be: email-1-input-name, email-1-label-email, etc.
+  ```
+</ParamField>
+
+## Usage Examples
+
+### Without any options
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import WelcomeEmail from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(WelcomeEmail);
+// Component receives no props, uses default values
+```
+
+### With props only
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import PasswordReset from '$lib/emails/password-reset.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(PasswordReset, {
+  props: {
+    username: 'john_doe',
+    resetUrl: 'https://example.com/reset?token=abc123',
+    expiresIn: '24 hours'
+  }
+});
+```
+
+### With context
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import EmailComponent from '$lib/emails/email.svelte';
+
+const context = new Map();
+context.set('apiUrl', 'https://api.example.com');
+context.set('locale', 'en-US');
+
+const renderer = new Renderer();
+const html = await renderer.render(EmailComponent, {
+  props: { name: 'John' },
+  context
+});
+```
+
+### With ID prefix
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import FormEmail from '$lib/emails/form.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(FormEmail, {
+  props: { formData: { /* ... */ } },
+  idPrefix: 'user-123-'
+});
+```
+
+### Complete example with all options
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import EmailComponent from '$lib/emails/email.svelte';
+
+const context = new Map();
+context.set('theme', {
+  primaryColor: '#FF3E00',
+  secondaryColor: '#40B3FF'
+});
+
+const renderer = new Renderer();
+const html = await renderer.render(EmailComponent, {
+  props: {
+    name: 'John Doe',
+    email: 'john@example.com',
+    verificationUrl: 'https://example.com/verify?token=xyz'
+  },
+  context,
+  idPrefix: 'email-verification-'
+});
+```
+
+### Rendering multiple emails with unique IDs
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import EmailComponent from '$lib/emails/email.svelte';
+
+const renderer = new Renderer();
+const users = [
+  { id: 1, name: 'Alice', email: 'alice@example.com' },
+  { id: 2, name: 'Bob', email: 'bob@example.com' }
+];
+
+for (const user of users) {
+  const html = await renderer.render(EmailComponent, {
+    props: {
+      name: user.name,
+      email: user.email
+    },
+    idPrefix: `user-${user.id}-`
+  });
+  
+  // Send email...
+}
+```
+
+## Component Example
+
+Here's what a Svelte email component might look like that uses these props:
+
+```svelte
+<!-- PasswordReset.svelte -->
+<script lang="ts">
+  export let username: string;
+  export let resetUrl: string;
+  export let expiresIn: string = '1 hour';
+</script>
+
+<Html>
+  <Head />
+  <Body class="bg-gray-100 font-sans">
+    <Container class="bg-white p-8 rounded-lg">
+      <Heading class="text-2xl font-bold mb-4">
+        Password Reset Request
+      </Heading>
+      
+      <Text class="mb-4">
+        Hi {username},
+      </Text>
+      
+      <Text class="mb-4">
+        We received a request to reset your password. Click the button below to create a new password:
+      </Text>
+      
+      <Button href={resetUrl} class="bg-blue-600 text-white px-6 py-3">
+        Reset Password
+      </Button>
+      
+      <Text class="text-sm text-gray-600 mt-4">
+        This link will expire in {expiresIn}.
+      </Text>
+    </Container>
+  </Body>
+</Html>
+```
+
+Then render it with:
+
+```ts
+const html = await renderer.render(PasswordReset, {
+  props: {
+    username: 'john_doe',
+    resetUrl: 'https://example.com/reset?token=abc123',
+    expiresIn: '24 hours'
+  }
+});
+```
+
+## Type Safety with TypeScript
+
+For better type safety, you can use Svelte's component types:
+
+```ts
+import Renderer from 'better-svelte-email/renderer';
+import PasswordReset from '$lib/emails/password-reset.svelte';
+import type { ComponentProps } from 'svelte';
+
+type PasswordResetProps = ComponentProps<typeof PasswordReset>;
+
+const renderer = new Renderer();
+const props: PasswordResetProps = {
+  username: 'john_doe',
+  resetUrl: 'https://example.com/reset?token=abc123',
+  expiresIn: '24 hours'
+};
+
+const html = await renderer.render(PasswordReset, { props });
+```
+
+## See Also
+
+- [Renderer](/api/renderer) - The Renderer class
+- [RendererOptions](/api/renderer-options) - Configuration options for the Renderer

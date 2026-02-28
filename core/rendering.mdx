@@ -1,0 +1,244 @@
+---
+title: Email Rendering
+description: Learn how Better Svelte Email transforms Svelte components into email-safe HTML
+icon: code
+---
+
+## How Rendering Works
+
+Better Svelte Email uses a multi-step process to transform your Svelte components into email-safe HTML with inline styles that work across all email clients.
+
+### The Rendering Pipeline
+
+The `Renderer` class orchestrates the entire rendering process:
+
+```typescript
+import Renderer from 'better-svelte-email/renderer';
+import EmailComponent from '$lib/emails/welcome.svelte';
+
+const renderer = new Renderer();
+const html = await renderer.render(EmailComponent, {
+  props: { name: 'John' }
+});
+```
+
+### Step-by-Step Process
+
+<Steps>
+  <Step title="Svelte Compilation">
+    Your Svelte component is rendered to HTML using Svelte's server-side rendering (`svelte/server`).
+    
+    ```svelte
+    <div class="bg-blue-500 text-white">Hello World</div>
+    ```
+    
+    This produces raw HTML with class attributes intact.
+  </Step>
+  
+  <Step title="HTML Parsing">
+    The HTML is parsed into an Abstract Syntax Tree (AST) using `parse5`, enabling programmatic manipulation of the DOM structure.
+  </Step>
+  
+  <Step title="Class Collection">
+    The renderer walks through the AST and collects all class names used in your components.
+    
+    From `src/lib/render/index.ts:152-164`:
+    ```typescript
+    walk(ast, (node) => {
+      if (isValidNode(node)) {
+        const classAttr = node.attrs?.find((attr) => attr.name === 'class');
+        
+        if (classAttr && classAttr.value) {
+          const classes = classAttr.value.split(/\s+/).filter(Boolean);
+          classesUsed = [...classesUsed, ...classes];
+          tailwindSetup.addUtilities(classes);
+        }
+      }
+      return node;
+    });
+    ```
+  </Step>
+  
+  <Step title="Tailwind CSS Generation">
+    Tailwind CSS v4 generates only the styles needed for the classes you actually used, keeping file sizes minimal.
+  </Step>
+  
+  <Step title="Style Classification">
+    Styles are separated into two categories:
+    
+    - **Inlinable**: Basic styles that can be converted to inline `style` attributes
+    - **Non-inlinable**: Responsive classes, pseudo-selectors, and media queries that must stay in `<style>` tags
+    
+    From `src/lib/render/utils/css/is-rule-inlinable.ts:6-39`:
+    ```typescript
+    export function isRuleInlinable(rule: Rule): boolean {
+      // Rules with media queries cannot be inlined
+      // e.g., .sm\:bg-blue-300 { @media (width >= 40rem) { ... } }
+      
+      // Rules with pseudo-selectors cannot be inlined
+      // e.g., :hover, ::before, :nth-child()
+      
+      return !hasPseudoSelector && !hasMediaQuery;
+    }
+    ```
+  </Step>
+  
+  <Step title="Style Inlining">
+    Inlinable styles are converted to inline `style` attributes on each element:
+    
+    ```html
+    <!-- Before -->
+    <div class="bg-blue-500 text-white">Hello</div>
+    
+    <!-- After -->
+    <div style="background-color: rgb(59 130 246); color: rgb(255 255 255);">Hello</div>
+    ```
+  </Step>
+  
+  <Step title="Media Query Injection">
+    Non-inlinable styles (responsive classes, hover states) are injected into a `<style>` tag in the `<head>`:
+    
+    ```html
+    <head>
+      <style>
+        @media (min-width: 768px) {
+          .md\\:text-left { text-align: left; }
+        }
+      </style>
+    </head>
+    ```
+  </Step>
+  
+  <Step title="DOCTYPE Replacement">
+    The DOCTYPE is replaced with XHTML 1.0 Transitional for maximum email client compatibility:
+    
+    ```html
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    ```
+  </Step>
+</Steps>
+
+### Style Priority
+
+When multiple styles apply to an element, they're combined in this order (lowest to highest priority):
+
+1. **Global styles** - Universal selectors (`*`) and element selectors (`div`, `p`)
+2. **Existing inline styles** - Styles already in the `style` attribute
+3. **Class styles** - Styles from Tailwind classes
+
+From `src/lib/render/utils/tailwindcss/add-inlined-styles-to-element.ts:80-81`:
+```typescript
+// Combine: global (lowest) -> existing inline -> class styles (highest)
+const newStyles = combineStyles(globalStyles, existingStyles, classStyles);
+```
+
+<Note>
+  Later styles override earlier ones, so your explicit inline styles always take precedence over class-based styles.
+</Note>
+
+## Configuration Options
+
+### Renderer Options
+
+```typescript
+const renderer = new Renderer({
+  // Custom Tailwind configuration
+  tailwindConfig: {
+    theme: {
+      extend: {
+        colors: {
+          brand: '#FF3E00'
+        }
+      }
+    }
+  },
+  
+  // Inject custom CSS (e.g., app theme variables)
+  customCSS: `
+    :root {
+      --brand-color: #FF3E00;
+    }
+  `,
+  
+  // Base font size for rem/em conversion
+  baseFontSize: 16
+});
+```
+
+### Render Options
+
+```typescript
+const html = await renderer.render(EmailComponent, {
+  // Component props
+  props: { 
+    username: 'john_doe', 
+    resetUrl: 'https://...' 
+  },
+  
+  // Svelte context
+  context: new Map(),
+  
+  // ID prefix for generated elements
+  idPrefix: 'email'
+});
+```
+
+## Error Handling
+
+### Missing Head Element
+
+If you use responsive classes without a `<head>` element, you'll get a helpful error:
+
+<Warning>
+  You are trying to use responsive Tailwind classes that cannot be inlined. For the media queries to work properly, they need to be added into a `<style>` tag inside of a `<head>` tag.
+  
+  Make sure you have a `<head>` element or use the `<Head>` component from `better-svelte-email`.
+</Warning>
+
+### Unknown Classes
+
+If you use classes that Tailwind doesn't recognize, you'll see a warning:
+
+```
+[better-svelte-email] You are using the following classes that were not recognized: custom-class.
+```
+
+<Tip>
+  Unknown classes are preserved in the output, so you can use custom classes if needed—just be aware they won't be styled unless you provide matching CSS.
+</Tip>
+
+## Performance Considerations
+
+### Minimal CSS Generation
+
+Better Svelte Email only generates CSS for classes you actually use. If you use 10 Tailwind classes, only those 10 classes are compiled.
+
+### Caching Strategy
+
+For production use, consider caching rendered emails:
+
+```typescript
+const cache = new Map<string, string>();
+
+async function getCachedEmail(key: string, component: any, props: any) {
+  if (cache.has(key)) {
+    return cache.get(key)!;
+  }
+  
+  const html = await renderer.render(component, { props });
+  cache.set(key, html);
+  return html;
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Tailwind Support" icon="palette" href="/core/tailwind-support">
+    Learn how Tailwind classes are converted to inline styles
+  </Card>
+  <Card title="Plain Text" icon="file-lines" href="/core/plain-text">
+    Generate plain text versions for accessibility
+  </Card>
+</CardGroup>

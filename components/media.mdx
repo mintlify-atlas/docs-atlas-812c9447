@@ -1,0 +1,626 @@
+---
+title: Media Components
+description: Img and Hr components for images and visual dividers in emails.
+---
+
+Media components for adding visual elements to your emails with email-client optimized defaults.
+
+## Img
+
+Optimized image component with email-safe defaults that prevent common rendering issues.
+
+### Props
+
+<ParamField path="src" type="string" required>
+  The image URL (use absolute URLs for production emails)
+</ParamField>
+
+<ParamField path="alt" type="string" required>
+  Alternative text for accessibility and when images don't load
+</ParamField>
+
+<ParamField path="width" type="string" required>
+  Image width (e.g., "200" for 200px)
+</ParamField>
+
+<ParamField path="height" type="string" required>
+  Image height (e.g., "150" for 150px)
+</ParamField>
+
+<ParamField path="style" type="string">
+  Inline CSS styles (merged with defaults)
+</ParamField>
+
+<ParamField path="class" type="string">
+  Tailwind CSS classes or custom CSS classes
+</ParamField>
+
+All standard HTML img attributes are supported via `HTMLImgAttributes`.
+
+### Default Styles
+
+- `display: block` - Prevents unwanted spacing
+- `outline: none` - Removes focus outline
+- `border: none` - Removes default border
+- `text-decoration: none` - Removes any link decoration
+
+### Usage
+
+```svelte
+<Img 
+  src="https://example.com/logo.png" 
+  alt="Company Logo" 
+  width="200" 
+  height="50"
+/>
+```
+
+<Tabs>
+  <Tab title="Basic Image">
+    ```svelte
+    <Img 
+      src="https://example.com/hero.jpg" 
+      alt="Hero image" 
+      width="600" 
+      height="400"
+    />
+    ```
+  </Tab>
+  
+  <Tab title="Logo">
+    ```svelte
+    <Section class="mb-8">
+      <Img 
+        src="https://example.com/logo.png" 
+        alt="Company Logo" 
+        width="120" 
+        height="40"
+        class="mx-auto"
+      />
+    </Section>
+    ```
+  </Tab>
+  
+  <Tab title="Product Image">
+    ```svelte
+    <Row>
+      <Column style="width: 150px;">
+        <Img 
+          src="https://example.com/product.jpg" 
+          alt="Product Name" 
+          width="150" 
+          height="150"
+          class="rounded"
+        />
+      </Column>
+      <Column class="pl-5">
+        <Heading as="h3">Product Name</Heading>
+        <Text>Product description...</Text>
+      </Column>
+    </Row>
+    ```
+  </Tab>
+  
+  <Tab title="Profile/Avatar">
+    ```svelte
+    <Section>
+      <Row>
+        <Column align="center">
+          <Img 
+            src="https://example.com/avatar.jpg" 
+            alt="User Avatar" 
+            width="64" 
+            height="64"
+            class="rounded-full"
+          />
+        </Column>
+      </Row>
+    </Section>
+    ```
+  </Tab>
+</Tabs>
+
+### Common Image Patterns
+
+<Tabs>
+  <Tab title="Header Logo">
+    ```svelte
+    <Container>
+      <Section class="pt-8">
+        <Row>
+          <Column>
+            <Img 
+              src="https://example.com/logo.png" 
+              alt="Company Logo" 
+              width="100" 
+              height="30"
+            />
+          </Column>
+          <Column align="right">
+            <Text class="text-sm text-gray-600">Invoice #12345</Text>
+          </Column>
+        </Row>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+  
+  <Tab title="Linked Image">
+    ```svelte
+    <Link href="https://example.com/product">
+      <Img 
+        src="https://example.com/product.jpg" 
+        alt="Click to view product" 
+        width="400" 
+        height="300"
+        class="rounded-lg"
+      />
+    </Link>
+    ```
+  </Tab>
+  
+  <Tab title="Image Grid">
+    ```svelte
+    <Section>
+      <Row>
+        <Column>
+          <Img 
+            src="https://example.com/img1.jpg" 
+            alt="Image 1" 
+            width="190" 
+            height="190"
+            class="rounded"
+          />
+        </Column>
+        <Column>
+          <Img 
+            src="https://example.com/img2.jpg" 
+            alt="Image 2" 
+            width="190" 
+            height="190"
+            class="rounded"
+          />
+        </Column>
+        <Column>
+          <Img 
+            src="https://example.com/img3.jpg" 
+            alt="Image 3" 
+            width="190" 
+            height="190"
+            class="rounded"
+          />
+        </Column>
+      </Row>
+    </Section>
+    ```
+  </Tab>
+  
+  <Tab title="Real Example">
+    ```svelte
+    <!-- From Apple receipt email -->
+    <Section>
+      <Row>
+        <Column style="width: 64px;">
+          <Img
+            src="https://example.com/app-icon.jpeg"
+            width="64"
+            height="64"
+            alt="HBO Max"
+            class="ml-5 rounded-xl border border-gray-200"
+          />
+        </Column>
+        <Column class="pl-6">
+          <Text class="text-xs font-semibold">
+            HBO Max: Stream TV &amp; Movies
+          </Text>
+          <Text class="text-xs text-gray-600">
+            HBO Max Ad-Free (Monthly)
+          </Text>
+        </Column>
+        <Column align="right" style="width: 100px;">
+          <Text class="pr-5 text-xs font-semibold">$14.99</Text>
+        </Column>
+      </Row>
+    </Section>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Hr
+
+Horizontal rule component for creating visual dividers between sections.
+
+### Props
+
+<ParamField path="style" type="string">
+  Inline CSS styles (merged with defaults)
+</ParamField>
+
+<ParamField path="class" type="string">
+  Tailwind CSS classes or custom CSS classes
+</ParamField>
+
+All standard HTML hr attributes are supported via `HTMLAttributes<HTMLHRElement>`.
+
+### Default Styles
+
+- `width: 100%` - Full width divider
+- `border: none` - Removes default border
+- `border-top-width: 1px` - Top border only
+- `border-top-style: solid` - Solid line
+- `border-color: #eaeaea` - Light gray color
+
+### Usage
+
+```svelte
+<Hr class="my-6" />
+```
+
+<Tabs>
+  <Tab title="Basic Divider">
+    ```svelte
+    <Section>
+      <Text>First section content</Text>
+    </Section>
+
+    <Hr />
+
+    <Section>
+      <Text>Second section content</Text>
+    </Section>
+    ```
+  </Tab>
+  
+  <Tab title="Styled Dividers">
+    ```svelte
+    <!-- Thick divider -->
+    <Hr class="my-8 border-t-2 border-gray-300" />
+
+    <!-- Colored divider -->
+    <Hr class="my-6 border-t border-blue-500" />
+
+    <!-- Dashed divider -->
+    <Hr style="border-top-style: dashed;" class="my-4" />
+
+    <!-- Subtle divider -->
+    <Hr class="my-6 border-t border-gray-100" />
+    ```
+  </Tab>
+  
+  <Tab title="With Spacing">
+    ```svelte
+    <Section class="mb-6">
+      <Heading as="h2">Section One</Heading>
+      <Text>Content for section one</Text>
+    </Section>
+
+    <Hr class="my-8" />
+
+    <Section class="mt-6">
+      <Heading as="h2">Section Two</Heading>
+      <Text>Content for section two</Text>
+    </Section>
+    ```
+  </Tab>
+  
+  <Tab title="Real Examples">
+    ```svelte
+    <!-- From Apple receipt -->
+    <Hr class="mt-8 mb-0" />
+
+    <Section>
+      <Row>
+        <Column align="right">
+          <Text class="pr-8 text-xs font-semibold uppercase text-gray-600">
+            TOTAL
+          </Text>
+        </Column>
+        <Column style="border-left: 1px solid #eeeeee;" />
+        <Column style="width: 90px;">
+          <Text class="pr-5 text-base font-semibold">
+            $14.99
+          </Text>
+        </Column>
+      </Row>
+    </Section>
+
+    <Hr class="mt-0 mb-20" />
+
+    <!-- Vercel invite -->
+    <Hr class="mx-0 my-7 w-full border border-solid border-gray-200" />
+    ```
+  </Tab>
+</Tabs>
+
+### Divider Variations
+
+<Tabs>
+  <Tab title="Section Separators">
+    ```svelte
+    <Container>
+      <Section>
+        <Heading as="h2">Updates</Heading>
+        <Text>Latest updates from our team...</Text>
+      </Section>
+
+      <Hr class="my-8 border-gray-200" />
+
+      <Section>
+        <Heading as="h2">News</Heading>
+        <Text>Recent news and announcements...</Text>
+      </Section>
+
+      <Hr class="my-8 border-gray-200" />
+
+      <Section>
+        <Heading as="h2">Events</Heading>
+        <Text>Upcoming events you won't want to miss...</Text>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+  
+  <Tab title="Content Blocks">
+    ```svelte
+    <Container>
+      <!-- Header -->
+      <Section class="mb-6">
+        <Heading as="h1">Monthly Newsletter</Heading>
+      </Section>
+
+      <Hr class="mb-8" />
+
+      <!-- Main content -->
+      <Section class="mb-6">
+        <Text>Newsletter content...</Text>
+      </Section>
+
+      <Hr class="my-8" />
+
+      <!-- Footer -->
+      <Section>
+        <Text class="text-xs text-gray-600">
+          Unsubscribe | Privacy Policy
+        </Text>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+  
+  <Tab title="Product Listings">
+    ```svelte
+    <Container>
+      <!-- Product 1 -->
+      <Section class="py-4">
+        <Row>
+          <Column style="width: 100px;">
+            <Img src="/product1.jpg" alt="Product 1" width="100" height="100" />
+          </Column>
+          <Column class="pl-4">
+            <Heading as="h3">Product Name</Heading>
+            <Text>$29.99</Text>
+          </Column>
+        </Row>
+      </Section>
+
+      <Hr class="my-2 border-gray-200" />
+
+      <!-- Product 2 -->
+      <Section class="py-4">
+        <Row>
+          <Column style="width: 100px;">
+            <Img src="/product2.jpg" alt="Product 2" width="100" height="100" />
+          </Column>
+          <Column class="pl-4">
+            <Heading as="h3">Another Product</Heading>
+            <Text>$39.99</Text>
+          </Column>
+        </Row>
+      </Section>
+
+      <Hr class="my-2 border-gray-200" />
+
+      <!-- Product 3 -->
+      <Section class="py-4">
+        <Row>
+          <Column style="width: 100px;">
+            <Img src="/product3.jpg" alt="Product 3" width="100" height="100" />
+          </Column>
+          <Column class="pl-4">
+            <Heading as="h3">Third Product</Heading>
+            <Text>$49.99</Text>
+          </Column>
+        </Row>
+      </Section>
+    </Container>
+    ```
+  </Tab>
+</Tabs>
+
+## Complete Example
+
+```svelte
+<script lang="ts">
+  import {
+    Html,
+    Head,
+    Body,
+    Container,
+    Section,
+    Row,
+    Column,
+    Heading,
+    Text,
+    Img,
+    Hr,
+    Button,
+    Link
+  } from 'better-svelte-email';
+</script>
+
+<Html>
+  <Head />
+  <Body class="bg-gray-50 font-sans">
+    <Container class="mx-auto my-10 rounded bg-white p-8">
+      <!-- Logo Header -->
+      <Section class="mb-8 text-center">
+        <Img 
+          src="https://example.com/logo.png" 
+          alt="Company Logo" 
+          width="150" 
+          height="50"
+          class="mx-auto"
+        />
+      </Section>
+
+      <Hr class="my-8 border-gray-200" />
+
+      <!-- Hero Image -->
+      <Section class="mb-8">
+        <Link href="https://example.com/campaign">
+          <Img 
+            src="https://example.com/hero.jpg" 
+            alt="Special Offer" 
+            width="584" 
+            height="300"
+            class="rounded-lg"
+          />
+        </Link>
+      </Section>
+
+      <!-- Content -->
+      <Section class="mb-8">
+        <Heading as="h1" class="mb-4 text-2xl font-bold text-center">
+          Exclusive Offer Inside
+        </Heading>
+        <Text class="text-gray-700 text-center">
+          Get 30% off your next purchase when you shop this week.
+        </Text>
+      </Section>
+
+      <!-- CTA -->
+      <Section class="mb-8 text-center">
+        <Button 
+          href="https://example.com/shop"
+          class="rounded bg-blue-600 px-8 py-4 text-white"
+        >
+          Shop Now
+        </Button>
+      </Section>
+
+      <Hr class="my-8 border-gray-200" />
+
+      <!-- Featured Products -->
+      <Section class="mb-4">
+        <Heading as="h2" class="mb-6 text-xl font-semibold">
+          Featured Products
+        </Heading>
+      </Section>
+
+      <Section>
+        <Row>
+          <Column>
+            <Img 
+              src="https://example.com/product1.jpg" 
+              alt="Product 1" 
+              width="180" 
+              height="180"
+              class="rounded"
+            />
+            <Text class="mt-2 text-center font-semibold">Product 1</Text>
+            <Text class="text-center text-gray-600">$29.99</Text>
+          </Column>
+          <Column>
+            <Img 
+              src="https://example.com/product2.jpg" 
+              alt="Product 2" 
+              width="180" 
+              height="180"
+              class="rounded"
+            />
+            <Text class="mt-2 text-center font-semibold">Product 2</Text>
+            <Text class="text-center text-gray-600">$39.99</Text>
+          </Column>
+          <Column>
+            <Img 
+              src="https://example.com/product3.jpg" 
+              alt="Product 3" 
+              width="180" 
+              height="180"
+              class="rounded"
+            />
+            <Text class="mt-2 text-center font-semibold">Product 3</Text>
+            <Text class="text-center text-gray-600">$49.99</Text>
+          </Column>
+        </Row>
+      </Section>
+
+      <Hr class="my-8 border-gray-300" />
+
+      <!-- Footer -->
+      <Section>
+        <Text class="text-center text-xs text-gray-500">
+          © 2024 Company Name. All rights reserved.
+        </Text>
+        <Text class="text-center text-xs text-gray-500">
+          <Link href="https://example.com/unsubscribe" class="text-gray-600">
+            Unsubscribe
+          </Link>
+          {' | '}
+          <Link href="https://example.com/privacy" class="text-gray-600">
+            Privacy Policy
+          </Link>
+        </Text>
+      </Section>
+    </Container>
+  </Body>
+</Html>
+```
+
+## Best Practices
+
+### Images
+
+<Warning>
+  Always use absolute URLs for image sources in production emails. Relative URLs will not work.
+</Warning>
+
+<Tip>
+  Always specify width and height attributes to prevent layout shifts when images load.
+</Tip>
+
+<Note>
+  Provide descriptive alt text for all images. This is crucial for accessibility and when images are blocked.
+</Note>
+
+<Tip>
+  Use `class="rounded"` or `class="rounded-full"` for modern, polished-looking images.
+</Tip>
+
+<Warning>
+  Keep image file sizes small for faster loading. Aim for under 1MB per image.
+</Warning>
+
+<Tip>
+  For retina displays, provide images at 2x resolution but specify half the dimensions in width/height attributes.
+</Tip>
+
+### Horizontal Rules
+
+<Tip>
+  Use Hr to create clear visual separation between different sections of content.
+</Tip>
+
+<Note>
+  Customize Hr with Tailwind margin classes (my-4, my-6, my-8) to control spacing around dividers.
+</Note>
+
+<Tip>
+  For subtle dividers, use lighter colors like `border-gray-100`. For prominent dividers, use darker colors like `border-gray-300`.
+</Tip>
+
+<Warning>
+  Avoid using too many dividers in a single email - they can make content feel fragmented. Use them strategically.
+</Warning>

@@ -1,0 +1,304 @@
+---
+title: HTML Structure Components
+description: Core HTML structure components - Html, Head, Body, and Preview for email foundations.
+---
+
+These components form the foundational HTML structure of your email. Every email should include these components in the proper hierarchy.
+
+## Html
+
+The root HTML element that wraps your entire email. Automatically includes the proper DOCTYPE for email compatibility.
+
+### Props
+
+<ParamField path="lang" type="string" default="en">
+  Language code for the email content
+</ParamField>
+
+<ParamField path="dir" type="'ltr' | 'rtl' | 'auto'" default="ltr">
+  Text direction for the email
+</ParamField>
+
+<ParamField path="style" type="string">
+  Inline CSS styles
+</ParamField>
+
+<ParamField path="children" type="snippet">
+  Email content (typically Head and Body components)
+</ParamField>
+
+All standard HTML attributes are also supported via `HTMLHtmlAttributes`.
+
+### Usage
+
+```svelte
+<Html lang="en" dir="ltr">
+  <Head />
+  <Body>
+    <!-- Email content -->
+  </Body>
+</Html>
+```
+
+<Tabs>
+  <Tab title="Basic">
+    ```svelte
+    <Html>
+      <Head />
+      <Body>
+        <Text>Hello World</Text>
+      </Body>
+    </Html>
+    ```
+  </Tab>
+  
+  <Tab title="With Language">
+    ```svelte
+    <Html lang="es" dir="ltr">
+      <Head />
+      <Body>
+        <Text>Hola Mundo</Text>
+      </Body>
+    </Html>
+    ```
+  </Tab>
+  
+  <Tab title="RTL Support">
+    ```svelte
+    <Html lang="ar" dir="rtl">
+      <Head />
+      <Body>
+        <Text>مرحبا بالعالم</Text>
+      </Body>
+    </Html>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Head
+
+Contains meta tags and email client compatibility settings. Automatically includes essential meta tags for responsive emails.
+
+### Props
+
+<ParamField path="children" type="snippet">
+  Additional head content (style tags, meta tags, etc.)
+</ParamField>
+
+### Default Meta Tags
+
+The Head component automatically includes:
+- `content-type` with UTF-8 charset
+- `viewport` for mobile responsiveness
+- `x-apple-disable-message-reformatting` for Apple Mail
+- `x-ua-compatible` for IE Edge mode
+
+### Usage
+
+```svelte
+<Head>
+  <!-- Optional: Add custom styles or meta tags -->
+</Head>
+```
+
+<Tabs>
+  <Tab title="Basic">
+    ```svelte
+    <Html>
+      <Head />
+      <Body>
+        <!-- Content -->
+      </Body>
+    </Html>
+    ```
+  </Tab>
+  
+  <Tab title="With Custom Styles">
+    ```svelte
+    <Html>
+      <Head>
+        <style>
+          {`
+            .custom-class {
+              color: #333;
+            }
+          `}
+        </style>
+      </Head>
+      <Body>
+        <!-- Content -->
+      </Body>
+    </Html>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Body
+
+The email body wrapper. Uses table-based layout for maximum email client compatibility.
+
+### Props
+
+<ParamField path="style" type="string">
+  Inline CSS styles applied to the body content wrapper
+</ParamField>
+
+<ParamField path="class" type="string">
+  Tailwind CSS classes or custom CSS classes
+</ParamField>
+
+<ParamField path="children" type="snippet">
+  Email body content
+</ParamField>
+
+All standard HTML body attributes are supported via `HTMLAttributes<HTMLBodyElement>`.
+
+### Usage
+
+```svelte
+<Body class="bg-gray-50 font-sans">
+  <Container>
+    <!-- Email content -->
+  </Container>
+</Body>
+```
+
+<Tabs>
+  <Tab title="Basic">
+    ```svelte
+    <Body>
+      <Text>Email content goes here</Text>
+    </Body>
+    ```
+  </Tab>
+  
+  <Tab title="With Background">
+    ```svelte
+    <Body class="bg-gray-100">
+      <Container>
+        <Text>Content with gray background</Text>
+      </Container>
+    </Body>
+    ```
+  </Tab>
+  
+  <Tab title="With Custom Font">
+    ```svelte
+    <Body 
+      class="font-sans"
+      style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;"
+    >
+      <Container>
+        <Text>Content with custom font</Text>
+      </Container>
+    </Body>
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Preview
+
+Defines the preview text that appears in email client inboxes before the email is opened. This is crucial for engagement.
+
+### Props
+
+<ParamField path="preview" type="string" required>
+  The preview text (max 150 characters)
+</ParamField>
+
+All standard HTML div attributes are supported via `HTMLAttributes<HTMLDivElement>`.
+
+### Features
+
+- Automatically truncated to 150 characters
+- Hidden from the visible email content
+- Fills remaining space with invisible characters to prevent email clients from showing body text
+
+### Usage
+
+```svelte
+<Preview preview="Your order has been confirmed and will ship soon!" />
+```
+
+<Tabs>
+  <Tab title="Basic">
+    ```svelte
+    <Body>
+      <Preview preview="Welcome to our newsletter!" />
+      <Container>
+        <!-- Email content -->
+      </Container>
+    </Body>
+    ```
+  </Tab>
+  
+  <Tab title="Transactional Email">
+    ```svelte
+    <Body>
+      <Preview preview="Your order #12345 has been shipped" />
+      <Container>
+        <Heading>Order Confirmation</Heading>
+        <!-- Order details -->
+      </Container>
+    </Body>
+    ```
+  </Tab>
+  
+  <Tab title="Marketing Email">
+    ```svelte
+    <Body>
+      <Preview preview="Limited time: 50% off everything! Don't miss out." />
+      <Container>
+        <Heading>Flash Sale!</Heading>
+        <!-- Promotion content -->
+      </Container>
+    </Body>
+    ```
+  </Tab>
+</Tabs>
+
+## Complete Example
+
+Here's a complete email structure using all four components:
+
+```svelte
+<script lang="ts">
+  import { Html, Head, Body, Preview, Container, Heading, Text } from 'better-svelte-email';
+</script>
+
+<Html lang="en">
+  <Head />
+  <Body class="bg-white font-sans">
+    <Preview preview="Your weekly digest is ready!" />
+    <Container class="mx-auto my-10 max-w-xl p-5">
+      <Heading as="h1" class="text-2xl font-bold text-gray-900">
+        Your Weekly Digest
+      </Heading>
+      <Text class="text-gray-700">
+        Here are the highlights from this week.
+      </Text>
+    </Container>
+  </Body>
+</Html>
+```
+
+## Best Practices
+
+<Warning>
+  Always include all four components in your email. The proper hierarchy is:
+  `Html > Head + Body > Preview + Container + Content`
+</Warning>
+
+<Tip>
+  Write compelling preview text that encourages recipients to open your email. Think of it as a mini subject line.
+</Tip>
+
+<Note>
+  The Body component uses table-based layout for compatibility. This is required for older email clients like Outlook.
+</Note>
